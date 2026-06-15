@@ -8,6 +8,7 @@ type AccountSummaryCardProps = {
   accountLabel: string;
   balanceInCents: number;
   isBalanceVisible: boolean;
+  balanceLoading?: boolean;
   onToggleBalanceVisibility: () => void;
 };
 
@@ -18,9 +19,14 @@ export function AccountSummaryCard({
   accountLabel,
   balanceInCents,
   isBalanceVisible,
+  balanceLoading = false,
   onToggleBalanceVisibility,
 }: AccountSummaryCardProps) {
-  const displayedBalance = isBalanceVisible ? formatCurrencyFromCents(balanceInCents) : 'R$ ******';
+  const displayedBalance = balanceLoading
+    ? '...'
+    : isBalanceVisible
+      ? formatCurrencyFromCents(balanceInCents)
+      : 'R$ ******';
 
   return (
     <section

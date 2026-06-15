@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { renderToString } from 'react-dom/server';
 import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -93,6 +93,12 @@ describe('AuthSessionProvider', () => {
   beforeEach(() => {
     window.sessionStorage.clear();
     vi.spyOn(crypto, 'randomUUID').mockReturnValue('entry-random-id');
+    global.fetch = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ accountBalanceInCents: 25000 }),
+      } as Response)
+    );
   });
 
   afterEach(() => {
@@ -118,9 +124,14 @@ describe('AuthSessionProvider', () => {
     expect(html).toContain('loading');
   });
 
-  it('hidrata sessao salva e atualiza extrato com mutacoes validas', () => {
+  it('hidrata sessao salva e atualiza extrato com mutacoes validas', async () => {
     storeSession(baseSession);
     const onValue = renderProvider();
+
+    await waitFor(() => {
+      const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
+      expect(context.balanceInCents).toBe(25000);
+    });
 
     let context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     const validDate = getTransactionDateRange().minDate;
@@ -207,7 +218,7 @@ describe('AuthSessionProvider', () => {
     });
   });
 
-  it('hidrata sessao sem lancamentos usando lista vazia como fallback', () => {
+  it('hidrata sessao sem lancamentos usando lista vazia como fallback', async () => {
     const sessionWithoutEntries = {
       ...baseSession,
       user: {
@@ -219,11 +230,14 @@ describe('AuthSessionProvider', () => {
 
     renderProvider();
 
-    expect(screen.getByTestId('status')).toHaveTextContent('authenticated');
+    await waitFor(() => {
+      expect(screen.getByTestId('status')).toHaveTextContent('authenticated');
+    });
+
     expect(screen.getByTestId('entries')).toHaveTextContent('8');
   });
 
-  it('cria lancamento com fallback quando randomUUID nao esta disponivel', () => {
+  it('cria lancamento com fallback quando randomUUID nao esta disponivel', async () => {
     storeSession(baseSession);
     vi.spyOn(Date, 'now').mockReturnValue(123456);
     vi.spyOn(Math, 'random').mockReturnValue(0.5);
@@ -233,6 +247,12 @@ describe('AuthSessionProvider', () => {
     });
 
     const onValue = renderProvider();
+
+    await waitFor(() => {
+      const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
+      expect(context.balanceInCents).toBe(25000);
+    });
+
     const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
 
     act(() => {
@@ -249,9 +269,15 @@ describe('AuthSessionProvider', () => {
     expect(updatedContext.statementEntries[0].id).toContain('entry-123456-');
   });
 
-  it('retorna mensagens de erro para mutacoes invalidas', () => {
+  it('retorna mensagens de erro para mutacoes invalidas', async () => {
     storeSession(baseSession);
     const onValue = renderProvider();
+
+    await waitFor(() => {
+      const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
+      expect(context.balanceInCents).toBe(25000);
+    });
+
     const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     const validDate = getTransactionDateRange().minDate;
 
@@ -299,7 +325,7 @@ describe('AuthSessionProvider', () => {
     ).toMatchObject({ ok: false, message: expect.stringContaining('Saldo insuficiente') });
   });
 
-  it('reage ao evento de mudanca da sessao', () => {
+  it('reage ao evento de mudanca da sessao', async () => {
     const onValue = renderProvider();
 
     expect(screen.getByTestId('status')).toHaveTextContent('unauthenticated');
@@ -309,12 +335,15 @@ describe('AuthSessionProvider', () => {
       window.dispatchEvent(new Event(AUTH_SESSION_CHANGED_EVENT));
     });
 
+    await waitFor(() => {
+      expect(screen.getByTestId('balance')).toHaveTextContent('25000');
+    });
+
     const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     expect(context.status).toBe('authenticated');
-    expect(screen.getByTestId('balance')).toHaveTextContent('25000');
   });
 
-  it('reage apenas a storage events da sessao autenticada', () => {
+  it('reage apenas a storage events da sessao autenticada', async () => {
     const onValue = renderProvider();
     const initialCallCount = onValue.mock.calls.length;
 
@@ -345,6 +374,11 @@ describe('AuthSessionProvider', () => {
       );
     });
 
+    await waitFor(() => {
+      const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
+      expect(context.status).toBe('authenticated');
+    });
+
     const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     expect(context.status).toBe('authenticated');
   });
@@ -363,7 +397,7 @@ describe('AuthSessionProvider', () => {
     expect(screen.getByTestId('status')).toHaveTextContent('authenticated');
   });
 
-  it('normaliza sessao persistida quando snapshot esta em formato legado', () => {
+  it('normaliza sessao persistida quando snapshot esta em formato legado', async () => {
     storeSession({
       token: 'token-legado',
       user: {
@@ -377,6 +411,13 @@ describe('AuthSessionProvider', () => {
     });
 
     renderProvider();
+
+    await waitFor(() => {
+      const stored = JSON.parse(
+        window.sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY) ?? '{}'
+      ) as AuthSession;
+      expect(stored.user.accountBalanceInCents).toBe(123456);
+    });
 
     const stored = JSON.parse(
       window.sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY) ?? '{}'

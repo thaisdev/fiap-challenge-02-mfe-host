@@ -38,6 +38,7 @@ import {
   TransactionType,
   toStatementEntryType,
 } from '../dashboard/_components/interfaces/statement-panel.interfaces';
+import useAccountBalance from '../dashboard/_hooks/use-account-balance';
 
 export type AuthSessionStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
@@ -46,6 +47,7 @@ type AuthSessionContextValue = {
   status: AuthSessionStatus;
   statementEntries: StatementEntry[];
   balanceInCents: number;
+  balanceLoading: boolean;
   onSubmitTransaction: (payload: NewTransactionPayload) => NewTransactionResult;
   onDeleteStatementEntry: (entryId: string) => void;
   onEditStatementEntry: (payload: EditStatementEntryPayload) => NewTransactionResult;
@@ -137,7 +139,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         ? 'authenticated'
         : 'unauthenticated';
 
-  const initialBalanceInCents = session?.user.accountBalanceInCents ?? 0;
+  const initialBalanceInCents = 0;
   const initialStatementEntries = session?.user.statementEntries ?? [];
   const [accountState, dispatchAccountAction] = useReducer(
     accountReducer,
@@ -145,6 +147,12 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   );
   const transactionDateRange = getTransactionDateRange();
   const lastHydratedSnapshotRef = useRef<string | null>(null);
+
+  const {
+    balanceInCents: fetchedBalance,
+    isLoading: balanceLoading,
+    error: balanceError,
+  } = useAccountBalance(status === 'authenticated');
 
   useEffect(() => {
     if (
@@ -156,13 +164,17 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       return;
     }
 
+    if (fetchedBalance == null) {
+      return;
+    }
+
     lastHydratedSnapshotRef.current = serializedSession;
     dispatchAccountAction({
       type: AccountActionType.HYDRATE_FROM_PROPS,
-      balanceInCents: session.user.accountBalanceInCents,
+      balanceInCents: fetchedBalance,
       statementEntries: session.user.statementEntries ?? [],
     });
-  }, [serializedSession, session]);
+  }, [serializedSession, session, fetchedBalance]);
 
   const onSubmitTransaction = ({
     type,
@@ -261,6 +273,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         onEditStatementEntry,
         statementEntries: accountState.currentStatementEntries,
         balanceInCents: accountState.currentBalanceInCents,
+        balanceLoading,
       }}
     >
       {children}

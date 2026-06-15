@@ -48,7 +48,7 @@ function formatCurrentDateLabel() {
 }
 
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
-  const { session, balanceInCents, statementEntries } = useAuthSessionContext();
+  const { session, balanceInCents, statementEntries, balanceLoading } = useAuthSessionContext();
   const [activeTab, setActiveTab] = useState<DashboardTabKey>('home');
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const currentDateLabel = useMemo(() => formatCurrentDateLabel(), []);
@@ -107,6 +107,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
                 accountLabel="Conta corrente"
                 balanceInCents={balanceInCents}
                 isBalanceVisible={isBalanceVisible}
+                balanceLoading={balanceLoading}
                 onToggleBalanceVisibility={() => setIsBalanceVisible((current) => !current)}
               />
               {children}
