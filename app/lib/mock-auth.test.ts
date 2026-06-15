@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import jwt from "jsonwebtoken";
 import { loginMockUser, registerMockUser, resetMockUsersStore, type MockUser } from "./mock-auth";
 
 describe("mock-auth", () => {
   beforeEach(() => {
+    process.env.JWT_SECRET = "test-jwt-secret";
     resetMockUsersStore();
   });
 
@@ -73,7 +75,11 @@ describe("mock-auth", () => {
 
     if (login.ok) {
       expect(login.user.email).toBe("joao@mail.com");
-      expect(login.token).toContain("mock-token-");
+      expect(jwt.verify(login.token, "test-jwt-secret")).toMatchObject({
+        email: "joao@mail.com",
+        name: "Joao Souza",
+        sub: login.user.id,
+      });
     }
   });
 

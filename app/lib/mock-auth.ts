@@ -1,4 +1,6 @@
-﻿export type MockUser = {
+﻿import jwt from "jsonwebtoken";
+
+export type MockUser = {
   id: string;
   name: string;
   email: string;
@@ -66,8 +68,26 @@ function toPublicUser(user: MockUser): PublicMockUser {
   };
 }
 
-function createMockToken(userId: string) {
-  return `mock-token-${userId}`;
+const MOCK_JWT_SECRET_FALLBACK = "mcintosh-bank-local-mock-secret";
+const MOCK_JWT_EXPIRES_IN = "1h";
+
+function getMockJwtSecret() {
+  return process.env.JWT_SECRET ?? MOCK_JWT_SECRET_FALLBACK;
+}
+
+function createMockJwtToken(user: MockUser) {
+  return jwt.sign(
+    {
+      email: user.email,
+      name: user.name,
+    },
+    getMockJwtSecret(),
+    {
+      algorithm: "HS256",
+      expiresIn: MOCK_JWT_EXPIRES_IN,
+      subject: user.id,
+    }
+  );
 }
 
 const DEFAULT_STATEMENT_TIME_ZONE = "America/Sao_Paulo";
@@ -210,7 +230,7 @@ export function loginMockUser({
   return {
     ok: true,
     user: toPublicUser(user),
-    token: createMockToken(user.id),
+    token: createMockJwtToken(user),
   };
 }
 
