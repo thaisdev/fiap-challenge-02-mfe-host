@@ -13,7 +13,7 @@ import {
   formatTransactionDateLabel,
   formatTransactionMonthLabel,
 } from '../_utils/transaction-date';
-import { useAuthSessionContext } from '@/app/context/auth-session-context';
+import { useAccountContext } from '../_state/account-context';
 
 type StatementPanelProps = {
   title?: string;
@@ -29,7 +29,7 @@ export function StatementPanel({
   showActions = true,
   entries = [],
 }: StatementPanelProps) {
-  const { transactions, onDeleteTransaction, onEditTransaction } = useAuthSessionContext()!;
+  const { transactions, onDeleteTransaction, onEditTransaction } = useAccountContext();
 
   const visibleTransactions = entries.length > 0 ? entries : transactions;
 

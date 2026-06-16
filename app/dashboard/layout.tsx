@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthSessionProvider, useAuthSessionContext } from '@/app/context/auth-session-context';
+import { AccountProvider, useAccountContext } from './_state/account-context';
 import { AccountSummaryCard } from './_components/account-summary-card';
 import { DashboardHeader } from './_components/dashboard-header';
+import { Alert } from '@/components/ui/alert';
 import { getTimestampFromTransactionDate } from './_utils/transaction-date';
 import {
   DashboardSidebarItem,
@@ -48,9 +50,11 @@ function formatCurrentDateLabel() {
 }
 
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
-  const { session, balance, transactions } = useAuthSessionContext();
+  const { session } = useAuthSessionContext();
+  const { balance, transactions, errorMessage } = useAccountContext();
   const [activeTab, setActiveTab] = useState<DashboardTabKey>('home');
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+  const [isErrorVisible, setIsErrorVisible] = useState(true);
   const currentDateLabel = useMemo(() => formatCurrentDateLabel(), []);
 
   const orderedTransactions = useMemo(() => {
@@ -90,6 +94,16 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       <DashboardHeader userName={name} />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-[688px] px-4 pb-10 pt-8 md:pb-10 md:pt-10 desktop:max-w-[1140px] desktop:px-0 desktop:pb-8 desktop:pt-4">
+          {errorMessage && isErrorVisible ? (
+            <div className="pb-6">
+              <Alert
+                variant="error"
+                message={errorMessage}
+                onClose={() => setIsErrorVisible(false)}
+              />
+            </div>
+          ) : null}
+
           <div className="grid gap-6 desktop:grid-cols-[142px_minmax(0,1fr)_240px] desktop:items-stretch desktop:gap-4">
             <div className="desktop:flex desktop:h-full">
               <DashboardSidebarNav
@@ -136,7 +150,11 @@ function AuthGuard({ children }: { children: ReactNode }) {
     return null;
   }
 
-  return <DashboardLayoutContent>{children}</DashboardLayoutContent>;
+  return (
+    <AccountProvider session={session}>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </AccountProvider>
+  );
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

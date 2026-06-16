@@ -82,17 +82,6 @@ describe('LoginForm', () => {
         id: 969,
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
-        account: {
-          balance: 2500,
-          transactions: [
-            {
-              id: 123,
-              type: 'DEPOSIT',
-              date: '2026-06-14T19:48:00Z',
-              value: 50,
-            },
-          ],
-        },
       },
     });
 
@@ -118,20 +107,9 @@ describe('LoginForm', () => {
         id: 969,
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
-        account: {
-          balance: 2500,
-          transactions: [
-            {
-              id: 123,
-              type: 'DEPOSIT',
-              date: '2026-06-14T19:48:00Z',
-              value: 50,
-            },
-          ],
-        },
       },
     });
-    expect(sessionStorage.getItem('mcintosh-bank:auth-token')).toBe('mock-token-user-1');
+    expect(sessionStorage.getItem('mcintosh-bank:auth-token')).toBeNull();
   });
 
   it('usa fallback vazio quando FormData retorna null', async () => {

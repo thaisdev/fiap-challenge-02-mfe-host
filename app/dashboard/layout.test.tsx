@@ -3,9 +3,10 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DashboardLayout from './layout';
 
-const { replaceMock, useAuthSessionContextMock } = vi.hoisted(() => ({
+const { replaceMock, useAuthSessionContextMock, useAccountContextMock } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
   useAuthSessionContextMock: vi.fn(),
+  useAccountContextMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -19,7 +20,12 @@ vi.mock('@/app/context/auth-session-context', () => ({
   useAuthSessionContext: useAuthSessionContextMock,
 }));
 
-function authenticatedContext(name = 'Joana da Silva Oliveira') {
+vi.mock('./_state/account-context', () => ({
+  AccountProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  useAccountContext: useAccountContextMock,
+}));
+
+function authenticatedSession(name = 'Joana da Silva Oliveira') {
   return {
     session: {
       user: {
@@ -27,6 +33,13 @@ function authenticatedContext(name = 'Joana da Silva Oliveira') {
       },
     },
     status: 'authenticated',
+  };
+}
+
+function accountContext() {
+  return {
+    status: 'ready',
+    errorMessage: null,
     balance: 2500,
     transactions: [
       {
@@ -60,7 +73,8 @@ function authenticatedContext(name = 'Joana da Silva Oliveira') {
 describe('DashboardLayout', () => {
   beforeEach(() => {
     replaceMock.mockClear();
-    useAuthSessionContextMock.mockReturnValue(authenticatedContext());
+    useAuthSessionContextMock.mockReturnValue(authenticatedSession());
+    useAccountContextMock.mockReturnValue(accountContext());
   });
 
   it('renderiza container da area de dashboard com children', () => {
@@ -77,12 +91,30 @@ describe('DashboardLayout', () => {
     expect(screen.getByRole('button', { name: 'Mostrar saldo' })).toBeInTheDocument();
   });
 
+  it('exibe alerta de erro quando a busca da conta falha', () => {
+    useAccountContextMock.mockReturnValue({
+      ...accountContext(),
+      status: 'error',
+      errorMessage: 'Token inválido ou expirado',
+    });
+
+    render(
+      <DashboardLayout>
+        <main>Conteudo da area de dashboard</main>
+      </DashboardLayout>
+    );
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Token inválido ou expirado');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar alerta' }));
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('redireciona para login quando sessao esta unauthenticated', () => {
     useAuthSessionContextMock.mockReturnValue({
-      ...authenticatedContext(),
+      ...authenticatedSession(),
       session: null,
       status: 'unauthenticated',
-      transactions: [],
     });
 
     const { container } = render(
@@ -97,10 +129,9 @@ describe('DashboardLayout', () => {
 
   it('nao renderiza children enquanto autenticacao esta carregando', () => {
     useAuthSessionContextMock.mockReturnValue({
-      ...authenticatedContext(),
+      ...authenticatedSession(),
       session: null,
       status: 'loading',
-      transactions: [],
     });
 
     const { container } = render(
@@ -114,7 +145,7 @@ describe('DashboardLayout', () => {
   });
 
   it('usa nome completo como fallback quando primeiro nome esta vazio', () => {
-    useAuthSessionContextMock.mockReturnValue(authenticatedContext(''));
+    useAuthSessionContextMock.mockReturnValue(authenticatedSession(''));
 
     render(
       <DashboardLayout>

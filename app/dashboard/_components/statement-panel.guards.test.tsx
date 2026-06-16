@@ -7,8 +7,8 @@ import { TransactionType } from './interfaces/statement-panel.interfaces';
 const onDeleteTransactionMock = vi.fn();
 const onEditTransactionMock = vi.fn();
 
-vi.mock('@/app/context/auth-session-context', () => ({
-  useAuthSessionContext: () => ({
+vi.mock('../_state/account-context', () => ({
+  useAccountContext: () => ({
     transactions: [],
     onDeleteTransaction: onDeleteTransactionMock,
     onEditTransaction: onEditTransactionMock,

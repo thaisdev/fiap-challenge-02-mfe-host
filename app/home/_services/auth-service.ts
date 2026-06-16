@@ -27,7 +27,6 @@ export type AuthenticatedMockUser = {
   id: number;
   name: string;
   email: string;
-  account: AuthAccount;
 };
 
 export type LoginMockAccountResult =
@@ -105,30 +104,11 @@ async function postJson(
   }
 }
 
-async function fetchAuthenticatedMockUserByEmail(email: string) {
-  try {
-    const response = await fetch('/api/mock/users');
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const body = (await response.json().catch(() => null)) as { users?: unknown } | null;
-
-    if (!body || !Array.isArray(body.users)) {
-      return null;
-    }
-
-    return (
-      body.users.find(
-        (user): user is AuthenticatedMockUser =>
-          isAuthenticatedMockUser(user) && user.email.toLowerCase() === email.toLowerCase()
-      ) ?? null
-    );
-  } catch {
-    return null;
-  }
-}
+type LoginUser = {
+  id: number;
+  name: string;
+  email: string;
+};
 
 function isAuthTransaction(value: unknown): value is AuthTransaction {
   if (!value || typeof value !== 'object') {
@@ -145,24 +125,78 @@ function isAuthTransaction(value: unknown): value is AuthTransaction {
   );
 }
 
-function isAuthenticatedMockUser(value: unknown): value is AuthenticatedMockUser {
+function isAuthAccount(value: unknown): value is AuthAccount {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const account = value as Record<string, unknown>;
+
+  return (
+    typeof account.balance === 'number' &&
+    Array.isArray(account.transactions) &&
+    account.transactions.every(isAuthTransaction)
+  );
+}
+
+function isLoginUser(value: unknown): value is LoginUser {
   if (!value || typeof value !== 'object') {
     return false;
   }
 
   const user = value as Record<string, unknown>;
-  const account = user.account as Record<string, unknown> | undefined;
 
   return (
     typeof user.id === 'number' &&
     typeof user.name === 'string' &&
-    typeof user.email === 'string' &&
-    !!account &&
-    typeof account === 'object' &&
-    typeof account.balance === 'number' &&
-    Array.isArray(account.transactions) &&
-    account.transactions.every(isAuthTransaction)
+    typeof user.email === 'string'
   );
+}
+
+export async function fetchAccountByUserId(
+  userId: number,
+  token: string
+): Promise<{ ok: true; account: AuthAccount } | { ok: false; message: string }> {
+  const fallbackErrorMessage = 'Nao foi possivel autenticar. Revise seus dados.';
+
+  try {
+    const response = await fetch(`http://localhost:3333/users/${userId}/account`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const body = (await response.json().catch(() => null)) as ServiceMessageResponse | null;
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        message: resolveMessage({
+          response,
+          body,
+          fallbackSuccessMessage: fallbackErrorMessage,
+          fallbackErrorMessage,
+        }),
+      };
+    }
+
+    if (!isAuthAccount(body)) {
+      return {
+        ok: false,
+        message: fallbackErrorMessage,
+      };
+    }
+
+    return {
+      ok: true,
+      account: body,
+    };
+  } catch {
+    return {
+      ok: false,
+      message: 'Erro de conexao. Tente novamente em instantes.',
+    };
+  }
 }
 
 export async function registerMockAccount(payload: RegisterMockAccountPayload) {
@@ -183,26 +217,20 @@ export async function loginMockAccount(payload: LoginMockAccountPayload) {
     fallbackErrorMessage: 'Nao foi possivel autenticar. Revise seus dados.',
   });
 
-  if (result.ok && typeof result.body?.token === 'string') {
-    const user = await fetchAuthenticatedMockUserByEmail(payload.email);
-
-    if (user) {
-      return {
-        ok: true as const,
-        message: result.message,
-        token: result.body.token,
-        user,
-      };
-    }
-
+  if (!result.ok || typeof result.body?.token !== 'string' || !isLoginUser(result.body.user)) {
     return {
       ok: false as const,
-      message: 'Nao foi possivel autenticar. Revise seus dados.',
+      message: result.message,
     };
   }
 
+  const { token } = result.body;
+  const { id, name, email } = result.body.user;
+
   return {
-    ok: false as const,
+    ok: true as const,
     message: result.message,
+    token,
+    user: { id, name, email },
   };
 }

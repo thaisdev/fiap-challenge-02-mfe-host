@@ -39,7 +39,7 @@ describe('TransactionsPage', () => {
     useAuthSessionContextMock.mockReturnValue({
       session: {
         user: {
-          id: 'user-1',
+          id: 969,
         },
       },
     });

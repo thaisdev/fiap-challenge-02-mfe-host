@@ -31,17 +31,6 @@ describe('useAuthSession', () => {
           id: 969,
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
-          account: {
-            balance: 2500,
-            transactions: [
-              {
-                id: 123,
-                type: 'DEPOSIT',
-                date: '2026-06-14T19:48:00Z',
-                value: 50,
-              },
-            ],
-          },
         },
       })
     );
@@ -53,7 +42,7 @@ describe('useAuthSession', () => {
     });
 
     expect(result.current.session?.user.name).toBe('Joana da Silva Oliveira');
-    expect(result.current.session?.user.account.balance).toBe(2500);
+    expect(result.current.session?.user.id).toBe(969);
   });
 
   it('retorna unauthenticated quando json salvo esta invalido', async () => {
@@ -83,10 +72,6 @@ describe('useAuthSession', () => {
           id: 969,
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
-          account: {
-            balance: 2500,
-            transactions: [],
-          },
         },
       })
     );
@@ -148,10 +133,6 @@ describe('useAuthSession', () => {
           id: 969,
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
-          account: {
-            balance: 2500,
-            transactions: [],
-          },
         },
       })
     );
@@ -165,7 +146,7 @@ describe('useAuthSession', () => {
     });
   });
 
-  it('persiste sessao normalizada quando extrato esta incompleto', async () => {
+  it('persiste sessao normalizada descartando campos extras', async () => {
     sessionStorage.setItem(
       AUTH_SESSION_STORAGE_KEY,
       JSON.stringify({
@@ -174,17 +155,7 @@ describe('useAuthSession', () => {
           id: 969,
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
-          account: {
-            balance: 2500,
-            transactions: [
-              {
-                id: 123,
-                type: 'DEPOSIT',
-                date: '2026-06-14T19:48:00Z',
-                value: 50,
-              },
-            ],
-          },
+          account: { balance: 2500, transactions: [] },
         },
       })
     );
@@ -199,9 +170,11 @@ describe('useAuthSession', () => {
       sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY) ?? '{}'
     ) as Record<string, unknown>;
     const normalizedUser = normalizedSession.user as Record<string, unknown>;
-    const normalizedAccount = normalizedUser.account as Record<string, unknown>;
 
-    expect(normalizedAccount.balance).toBe(2500);
-    expect((normalizedAccount.transactions as unknown[]).length).toBeGreaterThanOrEqual(8);
+    expect(normalizedUser).toEqual({
+      id: 969,
+      name: 'Joana da Silva Oliveira',
+      email: 'joana@mail.com',
+    });
   });
 });

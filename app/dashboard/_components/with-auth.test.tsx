@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthSession } from '@/app/lib/auth-session';
 import { withAuth } from './with-auth';
-import { TransactionType } from './interfaces/transaction.interfaces';
 
 const { replaceMock, routerMock } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
@@ -38,17 +37,6 @@ const authenticatedSession: AuthSession = {
     id: 969,
     name: 'Joana da Silva Oliveira',
     email: 'joana@mail.com',
-    account: {
-      balance: 2500,
-      transactions: [
-        {
-          id: 123,
-          type: TransactionType.DEPOSIT,
-          date: '2026-06-14T19:48:00Z',
-          value: 50,
-        },
-      ],
-    },
   },
 };
 

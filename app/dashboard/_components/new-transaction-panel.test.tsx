@@ -14,8 +14,8 @@ const onSubmitTransactionMock = vi.fn<
   NewTransactionResult
 >();
 
-vi.mock('@/app/context/auth-session-context', () => ({
-  useAuthSessionContext: () => ({
+vi.mock('../_state/account-context', () => ({
+  useAccountContext: () => ({
     onSubmitTransaction: onSubmitTransactionMock,
   }),
 }));
