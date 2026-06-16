@@ -15,7 +15,7 @@ export type AuthStatementEntry = {
   id: string;
   month: string;
   type: StatementEntryType;
-  amountInCents: number;
+  amount: number;
   date: string;
 };
 
@@ -139,7 +139,7 @@ function isStatementEntry(value: unknown): value is AuthStatementEntry {
     typeof entry.id === 'string' &&
     typeof entry.month === 'string' &&
     typeof entry.type === 'string' &&
-    typeof entry.amountInCents === 'number' &&
+    typeof entry.amount === 'number' &&
     typeof entry.date === 'string'
   );
 }

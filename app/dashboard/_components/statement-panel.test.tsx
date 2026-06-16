@@ -38,14 +38,14 @@ describe('StatementPanel', () => {
             id: '1',
             month: 'Novembro',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
+            amount: 150,
             date: '18/11/2022',
           },
           {
             id: '2',
             month: 'Novembro',
             type: StatementEntryType.TRANSFER,
-            amountInCents: -50000,
+            amount: -500,
             date: '21/11/2022',
           },
         ]}
@@ -76,7 +76,7 @@ describe('StatementPanel', () => {
             id: '1',
             month: 'Abril',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 1000,
+            amount: 10,
             date: '21/04/2026',
           },
         ]}
@@ -96,7 +96,7 @@ describe('StatementPanel', () => {
             id: '1',
             month: 'Novembro',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
+            amount: 150,
             date: '18/11/2022',
           },
         ]}
@@ -126,7 +126,7 @@ describe('StatementPanel', () => {
     expect(onEditStatementEntryMock).toHaveBeenCalledWith({
       entryId: '1',
       type: TransactionType.TRANSFER,
-      amountInCents: 70000,
+      amount: 700,
       transactionDate: '2026-04-22',
     });
     expect(screen.queryByRole('heading', { name: /Editar trans/i })).not.toBeInTheDocument();
@@ -145,7 +145,7 @@ describe('StatementPanel', () => {
             id: '1',
             month: 'Novembro',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
+            amount: 150,
             date: '18/11/2022',
           },
         ]}
@@ -172,7 +172,7 @@ describe('StatementPanel', () => {
             id: '1',
             month: 'Novembro',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
+            amount: 150,
             date: '18/11/2022',
           },
         ]}
@@ -199,7 +199,7 @@ describe('StatementPanel', () => {
             id: '1',
             month: 'Novembro',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
+            amount: 150,
             date: '18/11/2022',
           },
         ]}
@@ -225,7 +225,7 @@ describe('StatementPanel', () => {
             id: '1',
             month: 'Novembro',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
+            amount: 150,
             date: '18/11/2022',
           },
         ]}
@@ -249,7 +249,7 @@ describe('StatementPanel', () => {
             id: '1',
             month: 'Novembro',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
+            amount: 150,
             date: '18/11/2022',
           },
         ]}
@@ -279,7 +279,7 @@ describe('StatementPanel', () => {
             id: '1',
             month: 'Novembro',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
+            amount: 150,
             date: '18/11/2022',
           },
         ]}

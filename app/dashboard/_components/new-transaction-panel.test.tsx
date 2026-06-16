@@ -4,11 +4,14 @@ import { NewTransactionPanel } from './new-transaction-panel';
 import { TransactionType, type NewTransactionResult } from './interfaces/new-transaction-panel.interfaces';
 
 const onSubmitTransactionMock = vi.fn<
-  (payload: {
-    type: TransactionType;
-    amountInCents: number;
-    transactionDate: string;
-  }) => NewTransactionResult
+  [
+    payload: {
+      type: TransactionType;
+      amount: number;
+      transactionDate: string;
+    },
+  ],
+  NewTransactionResult
 >();
 
 vi.mock('@/app/context/auth-session-context', () => ({
@@ -130,7 +133,7 @@ describe('NewTransactionPanel', () => {
     expect(typeSelect).toHaveValue(TransactionType.DEPOSIT);
   });
 
-  it('envia o valor em centavos e reseta o formulario no submit valido', () => {
+  it('envia o valor em reais e reseta o formulario no submit valido', () => {
     render(<NewTransactionPanel />);
 
     const submitButton = screen.getByRole('button', { name: 'Concluir transa\u00e7\u00e3o' });
@@ -145,7 +148,7 @@ describe('NewTransactionPanel', () => {
 
     expect(onSubmitTransactionMock).toHaveBeenCalledWith({
       type: TransactionType.DEPOSIT,
-      amountInCents: 123456,
+      amount: 1234.56,
       transactionDate: '2026-04-19',
     });
     expect(typeSelect).toHaveValue('');

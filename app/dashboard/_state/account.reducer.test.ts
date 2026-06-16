@@ -12,14 +12,14 @@ const baseEntries = [
     id: '1',
     month: 'Novembro',
     type: StatementEntryType.DEPOSIT,
-    amountInCents: 15000,
+    amount: 150,
     date: '18/11/2022',
   },
   {
     id: '2',
     month: 'Novembro',
     type: StatementEntryType.TRANSFER,
-    amountInCents: -5000,
+    amount: -50,
     date: '21/11/2022',
   },
 ] as const;
@@ -52,7 +52,7 @@ describe('account.reducer', () => {
       id: '3',
       month: 'Novembro',
       type: StatementEntryType.DEPOSIT,
-      amountInCents: 7000,
+      amount: 70,
       date: '21/11/2022',
     };
 
@@ -95,7 +95,7 @@ describe('account.reducer', () => {
     const nextState = accountReducer(initialState, {
       type: AccountActionType.EDIT_STATEMENT_ENTRY,
       entryId: '2',
-      nextAmountInCents: 7000,
+      nextAmount: 70,
       nextType: StatementEntryType.TRANSFER,
       nextMonth: 'Dezembro',
       nextDate: '10/12/2022',
@@ -103,7 +103,7 @@ describe('account.reducer', () => {
 
     expect(nextState.currentBalance).toBe(2480);
     const editedTransfer = nextState.currentStatementEntries.find((entry) => entry.id === '2');
-    expect(editedTransfer?.amountInCents).toBe(-7000);
+    expect(editedTransfer?.amount).toBe(-70);
     expect(editedTransfer?.type).toBe(StatementEntryType.TRANSFER);
     expect(editedTransfer?.month).toBe('Dezembro');
     expect(editedTransfer?.date).toBe('10/12/2022');
@@ -115,7 +115,7 @@ describe('account.reducer', () => {
     const nextState = accountReducer(initialState, {
       type: AccountActionType.EDIT_STATEMENT_ENTRY,
       entryId: '1',
-      nextAmountInCents: -20000,
+      nextAmount: -200,
       nextType: StatementEntryType.DEPOSIT,
       nextMonth: 'Janeiro',
       nextDate: '02/01/2023',
@@ -123,7 +123,7 @@ describe('account.reducer', () => {
 
     expect(nextState.currentBalance).toBe(2550);
     const editedDeposit = nextState.currentStatementEntries.find((entry) => entry.id === '1');
-    expect(editedDeposit?.amountInCents).toBe(20000);
+    expect(editedDeposit?.amount).toBe(200);
     expect(editedDeposit?.type).toBe(StatementEntryType.DEPOSIT);
     expect(editedDeposit?.month).toBe('Janeiro');
     expect(editedDeposit?.date).toBe('02/01/2023');
@@ -135,7 +135,7 @@ describe('account.reducer', () => {
     const nextState = accountReducer(initialState, {
       type: AccountActionType.EDIT_STATEMENT_ENTRY,
       entryId: 'inexistente',
-      nextAmountInCents: 100,
+      nextAmount: 1,
       nextType: StatementEntryType.DEPOSIT,
       nextMonth: 'Novembro',
       nextDate: '18/11/2022',

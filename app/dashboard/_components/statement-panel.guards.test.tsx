@@ -45,7 +45,7 @@ describe('StatementPanel guards', () => {
             id: '1',
             month: 'Novembro',
             type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
+            amount: 150,
             date: '18/11/2022',
           },
         ]}

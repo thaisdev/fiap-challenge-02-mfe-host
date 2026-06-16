@@ -33,14 +33,14 @@ const baseSession: AuthSession = {
         id: 'entry-1',
         month: 'Abril',
         type: StatementEntryType.DEPOSIT,
-        amountInCents: 12000,
+        amount: 120,
         date: '10/04/2026',
       },
       {
         id: 'entry-2',
         month: 'Abril',
         type: StatementEntryType.TRANSFER,
-        amountInCents: -5000,
+        amount: -50,
         date: '11/04/2026',
       },
     ],
@@ -134,7 +134,7 @@ describe('AuthSessionProvider', () => {
       expect(
         context.onSubmitTransaction({
           type: TransactionType.DEPOSIT,
-          amountInCents: 3000,
+          amount: 30,
           transactionDate: validDate,
         })
       ).toEqual({ ok: true });
@@ -145,14 +145,14 @@ describe('AuthSessionProvider', () => {
     expect(context.statementEntries[0]).toMatchObject({
       id: 'entry-random-id',
       type: StatementEntryType.DEPOSIT,
-      amountInCents: 3000,
+      amount: 30,
     });
 
     act(() => {
       expect(
         context.onSubmitTransaction({
           type: TransactionType.TRANSFER,
-          amountInCents: 1000,
+          amount: 10,
           transactionDate: validDate,
         })
       ).toEqual({ ok: true });
@@ -161,7 +161,7 @@ describe('AuthSessionProvider', () => {
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     expect(context.statementEntries[0]).toMatchObject({
       type: StatementEntryType.TRANSFER,
-      amountInCents: -1000,
+      amount: -10,
     });
 
     act(() => {
@@ -177,7 +177,7 @@ describe('AuthSessionProvider', () => {
         context.onEditStatementEntry({
           entryId: 'entry-1',
           type: TransactionType.TRANSFER,
-          amountInCents: 4000,
+          amount: 40,
           transactionDate: validDate,
         })
       ).toEqual({ ok: true });
@@ -186,7 +186,7 @@ describe('AuthSessionProvider', () => {
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     expect(context.statementEntries.find((entry) => entry.id === 'entry-1')).toMatchObject({
       type: StatementEntryType.TRANSFER,
-      amountInCents: -4000,
+      amount: -40,
     });
 
     act(() => {
@@ -194,7 +194,7 @@ describe('AuthSessionProvider', () => {
         context.onEditStatementEntry({
           entryId: 'entry-1',
           type: TransactionType.DEPOSIT,
-          amountInCents: 4000,
+          amount: 40,
           transactionDate: validDate,
         })
       ).toEqual({ ok: true });
@@ -203,7 +203,7 @@ describe('AuthSessionProvider', () => {
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     expect(context.statementEntries.find((entry) => entry.id === 'entry-1')).toMatchObject({
       type: StatementEntryType.DEPOSIT,
-      amountInCents: 4000,
+      amount: 40,
     });
   });
 
@@ -239,7 +239,7 @@ describe('AuthSessionProvider', () => {
       expect(
         context.onSubmitTransaction({
           type: TransactionType.DEPOSIT,
-          amountInCents: 1000,
+          amount: 10,
           transactionDate: getTransactionDateRange().minDate,
         })
       ).toEqual({ ok: true });
@@ -258,7 +258,7 @@ describe('AuthSessionProvider', () => {
     expect(
       context.onSubmitTransaction({
         type: TransactionType.TRANSFER,
-        amountInCents: 999999,
+        amount: 9999.99,
         transactionDate: validDate,
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('Saldo insuficiente') });
@@ -266,7 +266,7 @@ describe('AuthSessionProvider', () => {
     expect(
       context.onSubmitTransaction({
         type: TransactionType.DEPOSIT,
-        amountInCents: 100,
+        amount: 1,
         transactionDate: '1900-01-01',
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('Data') });
@@ -275,7 +275,7 @@ describe('AuthSessionProvider', () => {
       context.onEditStatementEntry({
         entryId: 'inexistente',
         type: TransactionType.DEPOSIT,
-        amountInCents: 100,
+        amount: 1,
         transactionDate: validDate,
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('não encontrado') });
@@ -284,7 +284,7 @@ describe('AuthSessionProvider', () => {
       context.onEditStatementEntry({
         entryId: 'entry-1',
         type: TransactionType.DEPOSIT,
-        amountInCents: 100,
+        amount: 1,
         transactionDate: '1900-01-01',
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('Data') });
@@ -293,7 +293,7 @@ describe('AuthSessionProvider', () => {
       context.onEditStatementEntry({
         entryId: 'entry-1',
         type: TransactionType.TRANSFER,
-        amountInCents: 999999,
+        amount: 9999.99,
         transactionDate: validDate,
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('Saldo insuficiente') });

@@ -8,7 +8,7 @@ import {
   formatStatementEntryTypeLabel,
   StatementEntry,
 } from './interfaces/statement-panel.interfaces';
-import { formatCurrencyFromCents } from '@/app/lib/calc';
+import { formatCurrency } from '@/app/lib/calc';
 import { useAuthSessionContext } from '@/app/context/auth-session-context';
 
 type StatementPanelProps = {
@@ -142,7 +142,7 @@ export function StatementPanel({
                 {formatStatementEntryTypeLabel(entry.type)}
               </p>
               <p className="text-title-lg font-semibold text-black">
-                {formatCurrencyFromCents(entry.amountInCents)}
+                {formatCurrency(entry.amount)}
               </p>
             </li>
           ))}

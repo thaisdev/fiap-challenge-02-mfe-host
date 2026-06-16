@@ -32,15 +32,11 @@ export type AccountAction =
   | {
       type: AccountActionType.EDIT_STATEMENT_ENTRY;
       entryId: string;
-      nextAmountInCents: number;
+      nextAmount: number;
       nextType: StatementEntryType;
       nextMonth: string;
       nextDate: string;
     };
-
-function centsToReais(amountInCents: number): number {
-  return Math.round(amountInCents) / 100;
-}
 
 function roundToCentsPrecision(value: number): number {
   return Math.round(value * 100) / 100;
@@ -63,9 +59,7 @@ export function accountReducer(state: AccountState, action: AccountAction): Acco
 
     case AccountActionType.APPEND_TRANSACTION_ENTRY:
       return {
-        currentBalance: roundToCentsPrecision(
-          state.currentBalance + centsToReais(action.entry.amountInCents)
-        ),
+        currentBalance: roundToCentsPrecision(state.currentBalance + action.entry.amount),
         currentStatementEntries: [action.entry, ...state.currentStatementEntries],
       };
 
@@ -78,9 +72,7 @@ export function accountReducer(state: AccountState, action: AccountAction): Acco
       }
 
       return {
-        currentBalance: roundToCentsPrecision(
-          state.currentBalance - centsToReais(entryToDelete.amountInCents)
-        ),
+        currentBalance: roundToCentsPrecision(state.currentBalance - entryToDelete.amount),
         currentStatementEntries: state.currentStatementEntries.filter(
           (entry) => entry.id !== action.entryId
         ),
@@ -95,23 +87,21 @@ export function accountReducer(state: AccountState, action: AccountAction): Acco
         return state;
       }
 
-      const normalizedAmountInCents =
+      const normalizedAmount =
         action.nextType === StatementEntryType.TRANSFER
-          ? -Math.abs(action.nextAmountInCents)
-          : Math.abs(action.nextAmountInCents);
+          ? -Math.abs(action.nextAmount)
+          : Math.abs(action.nextAmount);
 
       return {
         currentBalance: roundToCentsPrecision(
-          state.currentBalance -
-            centsToReais(entryToEdit.amountInCents) +
-            centsToReais(normalizedAmountInCents)
+          state.currentBalance - entryToEdit.amount + normalizedAmount
         ),
         currentStatementEntries: state.currentStatementEntries.map((entry) =>
           entry.id === action.entryId
             ? {
                 ...entry,
                 type: action.nextType,
-                amountInCents: normalizedAmountInCents,
+                amount: normalizedAmount,
                 month: action.nextMonth,
                 date: action.nextDate,
               }

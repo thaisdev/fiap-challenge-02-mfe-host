@@ -27,12 +27,6 @@ function parseCurrencyStringToNumber(value: string): number | null {
   return Number.isFinite(numericValue) ? numericValue : null;
 }
 
-function parseCurrencyStringToCents(value: string): number | null {
-  const numericValue = parseCurrencyStringToNumber(value);
-
-  return numericValue === null ? null : Math.round(numericValue * 100);
-}
-
 function normalizeStatementEntry(
   value: unknown
 ): AuthenticatedMockUser['statementEntries'][number] | null {
@@ -40,11 +34,11 @@ function normalizeStatementEntry(
     return null;
   }
 
-  const amountInCents =
-    typeof value.amountInCents === 'number'
-      ? value.amountInCents
+  const amount =
+    typeof value.amount === 'number'
+      ? value.amount
       : typeof value.value === 'string'
-        ? parseCurrencyStringToCents(value.value)
+        ? parseCurrencyStringToNumber(value.value)
         : null;
 
   if (
@@ -52,7 +46,7 @@ function normalizeStatementEntry(
     typeof value.month !== 'string' ||
     typeof value.type !== 'string' ||
     typeof value.date !== 'string' ||
-    amountInCents === null
+    amount === null
   ) {
     return null;
   }
@@ -61,7 +55,7 @@ function normalizeStatementEntry(
     id: value.id,
     month: value.month,
     type: value.type as StatementEntryType,
-    amountInCents,
+    amount,
     date: value.date,
   };
 }
@@ -91,7 +85,7 @@ function createFallbackStatementEntry(
     id: `fallback-session-entry-${index}-${dateLabel.replace(/\//g, '-')}`,
     month: `${monthLabel.charAt(0).toUpperCase()}${monthLabel.slice(1)}`,
     type: isTransfer ? StatementEntryType.TRANSFER : StatementEntryType.DEPOSIT,
-    amountInCents: isTransfer ? -(3500 + index * 300) : 6500 + index * 500,
+    amount: isTransfer ? -(35 + index * 3) : 65 + index * 5,
     date: dateLabel,
   };
 }

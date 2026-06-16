@@ -25,7 +25,7 @@ type EditStatementEntryModalProps = {
   onSubmit?: (payload: EditStatementEntryPayload) => EditStatementEntryResult | void;
 };
 
-function parseCurrencyInputToCents(value: string) {
+function parseCurrencyInputToAmount(value: string) {
   const normalizedAmount = value.replace(/\./g, '').replace(',', '.');
   const amountValue = Number(normalizedAmount);
 
@@ -33,16 +33,14 @@ function parseCurrencyInputToCents(value: string) {
     return 0;
   }
 
-  return Math.round(amountValue * 100);
+  return Math.round(amountValue * 100) / 100;
 }
 
-function formatCentsToInputValue(amountInCents: number) {
-  const absoluteAmount = Math.abs(amountInCents);
-  const integerPart = Math.floor(absoluteAmount / 100)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  const decimalPart = (absoluteAmount % 100).toString().padStart(2, '0');
-  return `${integerPart},${decimalPart}`;
+function formatAmountToInputValue(amount: number) {
+  const absoluteAmount = Math.abs(amount);
+  const [integerPart, decimalPart] = absoluteAmount.toFixed(2).split('.');
+  const normalizedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${normalizedInteger},${decimalPart}`;
 }
 
 function parsePtBrDateToIso(date: string) {
@@ -75,7 +73,7 @@ export function EditStatementEntryModal({
     normalizeEntryType(entry.type)
   );
   const [transactionAmount, setTransactionAmount] = useState(() =>
-    formatCentsToInputValue(entry.amountInCents)
+    formatAmountToInputValue(entry.amount)
   );
   const [transactionDate, setTransactionDate] = useState(
     () => parsePtBrDateToIso(entry.date) ?? getDefaultTransactionDate()
@@ -86,11 +84,11 @@ export function EditStatementEntryModal({
     { value: TransactionType.TRANSFER, label: 'Transferência' },
   ];
 
-  const amountInCents = useMemo(
-    () => parseCurrencyInputToCents(transactionAmount),
+  const amount = useMemo(
+    () => parseCurrencyInputToAmount(transactionAmount),
     [transactionAmount]
   );
-  const isAmountValid = amountInCents > 0;
+  const isAmountValid = amount > 0;
   const isDateValid = isTransactionDateWithinRange(transactionDate, calendarRange);
   const isFormValid = isAmountValid && isDateValid;
 
@@ -116,7 +114,7 @@ export function EditStatementEntryModal({
     const result = onSubmit?.({
       entryId: entry.id,
       type: transactionType,
-      amountInCents,
+      amount,
       transactionDate,
     });
 

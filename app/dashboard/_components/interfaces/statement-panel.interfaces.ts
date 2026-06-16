@@ -21,14 +21,14 @@ export type StatementEntry = {
   id: string;
   month: string;
   type: StatementEntryType;
-  amountInCents: number;
+  amount: number;
   date: string;
 };
 
 export type EditStatementEntryPayload = {
   entryId: string;
   type: TransactionType;
-  amountInCents: number;
+  amount: number;
   transactionDate: string;
 };
 

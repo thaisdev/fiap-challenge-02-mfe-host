@@ -7,7 +7,7 @@ const baseEntry = {
   id: '1',
   month: 'Novembro',
   type: StatementEntryType.DEPOSIT,
-  amountInCents: 15000,
+  amount: 150,
   date: '18/11/2022',
 };
 
@@ -18,7 +18,7 @@ describe('EditStatementEntryModal', () => {
         entry={{
           ...baseEntry,
           type: StatementEntryType.TRANSFER,
-          amountInCents: -50000,
+          amount: -500,
           date: '21/11/2022',
         }}
         onClose={vi.fn()}

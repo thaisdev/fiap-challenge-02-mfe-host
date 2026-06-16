@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthSession } from '@/app/lib/auth-session';
 import { withAuth } from './with-auth';
+import { StatementEntryType } from './interfaces/transaction.interfaces';
 
 const { replaceMock, routerMock } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
@@ -43,8 +44,8 @@ const authenticatedSession: AuthSession = {
       {
         id: 'entry-1',
         month: 'Novembro',
-        type: 'Deposito',
-        amountInCents: 5000,
+        type: StatementEntryType.DEPOSIT,
+        amount: 50,
         date: '21/11/2022',
       },
     ],

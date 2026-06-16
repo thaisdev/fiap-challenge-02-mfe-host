@@ -57,7 +57,7 @@ const SERVER_SNAPSHOT = '__server_snapshot__';
 const EMPTY_SNAPSHOT = '__empty_snapshot__';
 
 function createStatementEntry(
-  { type, amountInCents }: Omit<NewTransactionPayload, 'transactionDate'>,
+  { type, amount }: Omit<NewTransactionPayload, 'transactionDate'>,
   statementDate: TransactionStatementDate
 ): StatementEntry {
   const id =
@@ -69,7 +69,7 @@ function createStatementEntry(
     id,
     month: statementDate.monthLabel,
     type: toStatementEntryType(type),
-    amountInCents: type === TransactionType.DEPOSIT ? amountInCents : -amountInCents,
+    amount: type === TransactionType.DEPOSIT ? amount : -amount,
     date: statementDate.dateLabel,
   };
 }
@@ -166,10 +166,10 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
 
   const onSubmitTransaction = ({
     type,
-    amountInCents,
+    amount,
     transactionDate,
   }: NewTransactionPayload): NewTransactionResult => {
-    if (type === TransactionType.TRANSFER && amountInCents / 100 > accountState.currentBalance) {
+    if (type === TransactionType.TRANSFER && amount > accountState.currentBalance) {
       return {
         ok: false,
         message: 'Saldo insuficiente para concluir a transferência.',
@@ -184,7 +184,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       };
     }
 
-    const entry = createStatementEntry({ type, amountInCents }, statementDate);
+    const entry = createStatementEntry({ type, amount }, statementDate);
     dispatchAccountAction({
       type: AccountActionType.APPEND_TRANSACTION_ENTRY,
       entry,
@@ -205,7 +205,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
   const onEditStatementEntry = ({
     entryId,
     type,
-    amountInCents,
+    amount,
     transactionDate,
   }: EditStatementEntryPayload): NewTransactionResult => {
     const entryToEdit = accountState.currentStatementEntries.find((entry) => entry.id === entryId);
@@ -224,12 +224,8 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       };
     }
 
-    const nextSignedAmountInCents =
-      type === TransactionType.DEPOSIT ? amountInCents : -amountInCents;
-    const projectedBalance =
-      accountState.currentBalance -
-      entryToEdit.amountInCents / 100 +
-      nextSignedAmountInCents / 100;
+    const nextSignedAmount = type === TransactionType.DEPOSIT ? amount : -amount;
+    const projectedBalance = accountState.currentBalance - entryToEdit.amount + nextSignedAmount;
 
     if (projectedBalance < 0) {
       return {
@@ -241,7 +237,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     dispatchAccountAction({
       type: AccountActionType.EDIT_STATEMENT_ENTRY,
       entryId,
-      nextAmountInCents: amountInCents,
+      nextAmount: amount,
       nextType:
         type === TransactionType.DEPOSIT ? StatementEntryType.DEPOSIT : StatementEntryType.TRANSFER,
       nextMonth: statementDate.monthLabel,

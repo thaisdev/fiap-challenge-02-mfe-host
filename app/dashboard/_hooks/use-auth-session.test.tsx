@@ -38,7 +38,7 @@ describe('useAuthSession', () => {
               id: 'entry-1',
               month: 'Novembro',
               type: 'Deposito',
-              amountInCents: 5000,
+              amount: 50,
               date: '21/11/2022',
             },
           ],
