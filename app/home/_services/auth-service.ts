@@ -23,23 +23,23 @@ export type AuthAccount = {
   transactions: AuthTransaction[];
 };
 
-export type AuthenticatedMockUser = {
+export type AuthenticatedUser = {
   id: number;
   name: string;
   email: string;
 };
 
-export type LoginMockAccountResult =
-  | (ServiceResult & { ok: true; token: string; user: AuthenticatedMockUser })
+export type LoginAccountResult =
+  | (ServiceResult & { ok: true; token: string; user: AuthenticatedUser })
   | (ServiceResult & { ok: false });
 
-type RegisterMockAccountPayload = {
+type RegisterAccountPayload = {
   name: string;
   email: string;
   password: string;
 };
 
-type LoginMockAccountPayload = {
+type LoginAccountPayload = {
   email: string;
   password: string;
 };
@@ -71,7 +71,7 @@ function resolveMessage({
 
 async function postJson(
   path: string,
-  payload: RegisterMockAccountPayload | LoginMockAccountPayload,
+  payload: RegisterAccountPayload | LoginAccountPayload,
   { fallbackSuccessMessage, fallbackErrorMessage }: PostJsonOptions
 ): Promise<ServiceResult & { body: ServiceMessageResponse | null }> {
   try {
@@ -199,7 +199,7 @@ export async function fetchAccountByUserId(
   }
 }
 
-export async function registerMockAccount(payload: RegisterMockAccountPayload) {
+export async function registerAccount(payload: RegisterAccountPayload) {
   const result = await postJson('http://localhost:3333/users', payload, {
     fallbackSuccessMessage: 'Usuario criado com sucesso.',
     fallbackErrorMessage: 'Nao foi possivel criar a conta. Tente novamente.',
@@ -211,7 +211,7 @@ export async function registerMockAccount(payload: RegisterMockAccountPayload) {
   };
 }
 
-export async function loginMockAccount(payload: LoginMockAccountPayload) {
+export async function loginAccount(payload: LoginAccountPayload) {
   const result = await postJson('http://localhost:3333/login', payload, {
     fallbackSuccessMessage: 'Login realizado com sucesso.',
     fallbackErrorMessage: 'Nao foi possivel autenticar. Revise seus dados.',

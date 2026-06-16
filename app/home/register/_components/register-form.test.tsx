@@ -2,12 +2,12 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RegisterForm } from "./register-form";
 
-const { registerMockAccountMock } = vi.hoisted(() => ({
-  registerMockAccountMock: vi.fn(),
+const { registerAccountMock } = vi.hoisted(() => ({
+  registerAccountMock: vi.fn(),
 }));
 
 vi.mock("../../_services/auth-service", () => ({
-  registerMockAccount: registerMockAccountMock,
+  registerAccount: registerAccountMock,
 }));
 
 describe("RegisterForm", () => {
@@ -95,7 +95,7 @@ describe("RegisterForm", () => {
   });
 
   it("envia register e mostra feedback de sucesso da API", async () => {
-    registerMockAccountMock.mockResolvedValue({
+    registerAccountMock.mockResolvedValue({
       ok: true,
       message: "Usuario criado com sucesso.",
     });
@@ -107,7 +107,7 @@ describe("RegisterForm", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(registerMockAccountMock).toHaveBeenCalledWith({
+      expect(registerAccountMock).toHaveBeenCalledWith({
         name: "Maria Silva",
         email: "maria@mail.com",
         password: "123456",
@@ -133,7 +133,7 @@ describe("RegisterForm", () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(registerMockAccountMock).not.toHaveBeenCalled();
+      expect(registerAccountMock).not.toHaveBeenCalled();
     });
   });
 
@@ -151,7 +151,7 @@ describe("RegisterForm", () => {
     }
 
     fireEvent.submit(form);
-    expect(registerMockAccountMock).not.toHaveBeenCalled();
+    expect(registerAccountMock).not.toHaveBeenCalled();
 
     rerender(<RegisterForm layout="modal" />);
 
@@ -166,7 +166,7 @@ describe("RegisterForm", () => {
     }
 
     fireEvent.submit(form);
-    expect(registerMockAccountMock).not.toHaveBeenCalled();
+    expect(registerAccountMock).not.toHaveBeenCalled();
   });
 
   it("nao envia cadastro quando FormData retorna null e o formulario fica invalido", async () => {
@@ -179,7 +179,7 @@ describe("RegisterForm", () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(registerMockAccountMock).not.toHaveBeenCalled();
+      expect(registerAccountMock).not.toHaveBeenCalled();
     });
 
     formDataGetSpy.mockRestore();
@@ -200,7 +200,7 @@ describe("RegisterForm", () => {
     }
 
     fireEvent.submit(form);
-    expect(registerMockAccountMock).not.toHaveBeenCalled();
+    expect(registerAccountMock).not.toHaveBeenCalled();
     formDataGetSpy.mockRestore();
 
     rerender(<RegisterForm layout="modal" />);
@@ -218,7 +218,7 @@ describe("RegisterForm", () => {
     }
 
     fireEvent.submit(form);
-    expect(registerMockAccountMock).not.toHaveBeenCalled();
+    expect(registerAccountMock).not.toHaveBeenCalled();
     formDataGetSpy.mockRestore();
   });
 
@@ -234,12 +234,12 @@ describe("RegisterForm", () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(registerMockAccountMock).not.toHaveBeenCalled();
+      expect(registerAccountMock).not.toHaveBeenCalled();
     });
   });
 
   it("envia strings vazias quando payload valido vira null no submit", async () => {
-    registerMockAccountMock.mockResolvedValue({
+    registerAccountMock.mockResolvedValue({
       ok: true,
       message: "Usuario criado com sucesso.",
     });
@@ -261,7 +261,7 @@ describe("RegisterForm", () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(registerMockAccountMock).toHaveBeenCalledWith({
+      expect(registerAccountMock).toHaveBeenCalledWith({
         name: "",
         email: "",
         password: "",
@@ -272,7 +272,7 @@ describe("RegisterForm", () => {
   });
 
   it("mostra feedback de erro quando API retorna falha", async () => {
-    registerMockAccountMock.mockResolvedValue({
+    registerAccountMock.mockResolvedValue({
       ok: false,
       message: "Ja existe usuario cadastrado com este email.",
     });
@@ -288,7 +288,7 @@ describe("RegisterForm", () => {
   });
 
   it("fecha alerta manualmente no botao x", async () => {
-    registerMockAccountMock.mockResolvedValue({
+    registerAccountMock.mockResolvedValue({
       ok: false,
       message: "Erro ao cadastrar",
     });

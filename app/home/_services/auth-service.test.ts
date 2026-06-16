@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchAccountByUserId, loginMockAccount, registerMockAccount } from './auth-service';
+import { fetchAccountByUserId, loginAccount, registerAccount } from './auth-service';
 
 describe('auth-service', () => {
   afterEach(() => {
@@ -7,7 +7,7 @@ describe('auth-service', () => {
     vi.unstubAllGlobals();
   });
 
-  describe('registerMockAccount', () => {
+  describe('registerAccount', () => {
     it('envia cadastro para http://localhost:3333/users e usa fallback de sucesso quando a API nao retorna mensagem', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
@@ -19,7 +19,7 @@ describe('auth-service', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      const result = await registerMockAccount({
+      const result = await registerAccount({
         name: 'Maria',
         email: 'maria@mail.com',
         password: '123456',
@@ -49,7 +49,7 @@ describe('auth-service', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      const result = await registerMockAccount({
+      const result = await registerAccount({
         name: 'Maria',
         email: 'maria@mail.com',
         password: '123456',
@@ -68,7 +68,7 @@ describe('auth-service', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      const result = await registerMockAccount({
+      const result = await registerAccount({
         name: 'Maria',
         email: 'maria@mail.com',
         password: '123456',
@@ -92,7 +92,7 @@ describe('auth-service', () => {
     });
   });
 
-  describe('loginMockAccount', () => {
+  describe('loginAccount', () => {
     it('ignora mensagem vazia da API no login e usa fallback', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: false,
@@ -100,7 +100,7 @@ describe('auth-service', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      const result = await loginMockAccount({
+      const result = await loginAccount({
         email: 'maria@mail.com',
         password: '123456',
       });
@@ -126,7 +126,7 @@ describe('auth-service', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      const result = await loginMockAccount({
+      const result = await loginAccount({
         email: 'joana@mail.com',
         password: '123456',
       });
@@ -163,7 +163,7 @@ describe('auth-service', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      const result = await loginMockAccount({
+      const result = await loginAccount({
         email: 'joana@mail.com',
         password: '123456',
       });
@@ -184,7 +184,7 @@ describe('auth-service', () => {
       });
       vi.stubGlobal('fetch', fetchMock);
 
-      const result = await loginMockAccount({
+      const result = await loginAccount({
         email: 'joana@mail.com',
         password: '123456',
       });
@@ -200,7 +200,7 @@ describe('auth-service', () => {
       const fetchMock = vi.fn().mockRejectedValue(new Error('network error'));
       vi.stubGlobal('fetch', fetchMock);
 
-      const result = await loginMockAccount({
+      const result = await loginAccount({
         email: 'maria@mail.com',
         password: '123456',
       });

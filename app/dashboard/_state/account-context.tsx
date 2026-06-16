@@ -38,7 +38,7 @@ type AccountContextValue = {
 
 const AccountContext = createContext<AccountContextValue | null>(null);
 
-function createMockTransactionId() {
+function createTransactionId() {
   return Date.now() + Math.floor(Math.random() * 1000);
 }
 
@@ -47,7 +47,7 @@ function createTransaction(
   isoDate: string
 ): Transaction {
   return {
-    id: createMockTransactionId(),
+    id: createTransactionId(),
     type,
     value: Math.abs(value),
     date: isoDate,

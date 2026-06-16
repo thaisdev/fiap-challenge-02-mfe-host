@@ -1,11 +1,11 @@
-import type { AuthenticatedMockUser } from '../home/_services/auth-service';
+import type { AuthenticatedUser } from '../home/_services/auth-service';
 
 export const AUTH_SESSION_STORAGE_KEY = 'mcintosh-bank:auth-session';
 export const AUTH_SESSION_CHANGED_EVENT = 'mcintosh-bank:auth-session-changed';
 
 export type AuthSession = {
   token: string;
-  user: AuthenticatedMockUser;
+  user: AuthenticatedUser;
 };
 
 type UnknownRecord = Record<string, unknown>;

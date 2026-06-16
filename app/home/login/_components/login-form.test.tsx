@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LoginForm } from './login-form';
 import { AUTH_SESSION_STORAGE_KEY } from '@/app/lib/auth-session';
 
-const { loginMockAccountMock, pushMock } = vi.hoisted(() => ({
-  loginMockAccountMock: vi.fn(),
+const { loginAccountMock, pushMock } = vi.hoisted(() => ({
+  loginAccountMock: vi.fn(),
   pushMock: vi.fn(),
 }));
 
@@ -15,7 +15,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('../../_services/auth-service', () => ({
-  loginMockAccount: loginMockAccountMock,
+  loginAccount: loginAccountMock,
 }));
 
 describe('LoginForm', () => {
@@ -74,7 +74,7 @@ describe('LoginForm', () => {
   });
 
   it('envia login, salva sessao e redireciona quando sucesso', async () => {
-    loginMockAccountMock.mockResolvedValue({
+    loginAccountMock.mockResolvedValue({
       ok: true,
       message: 'Login realizado com sucesso.',
       token: 'mock-token-user-1',
@@ -91,7 +91,7 @@ describe('LoginForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /acessar/i }));
 
     await waitFor(() => {
-      expect(loginMockAccountMock).toHaveBeenCalledWith({
+      expect(loginAccountMock).toHaveBeenCalledWith({
         email: 'user@mail.com',
         password: '123456',
       });
@@ -113,7 +113,7 @@ describe('LoginForm', () => {
   });
 
   it('usa fallback vazio quando FormData retorna null', async () => {
-    loginMockAccountMock.mockResolvedValue({
+    loginAccountMock.mockResolvedValue({
       ok: false,
       message: 'Dados obrigatórios ausentes.',
     });
@@ -127,7 +127,7 @@ describe('LoginForm', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(loginMockAccountMock).toHaveBeenCalledWith({
+      expect(loginAccountMock).toHaveBeenCalledWith({
         email: '',
         password: '',
       });
@@ -137,7 +137,7 @@ describe('LoginForm', () => {
   });
 
   it('mostra feedback de erro quando API retorna falha', async () => {
-    loginMockAccountMock.mockResolvedValue({
+    loginAccountMock.mockResolvedValue({
       ok: false,
       message: 'Email ou senha invalidos.',
     });
@@ -152,7 +152,7 @@ describe('LoginForm', () => {
   });
 
   it('fecha alerta manualmente no botao x', async () => {
-    loginMockAccountMock.mockResolvedValue({
+    loginAccountMock.mockResolvedValue({
       ok: false,
       message: 'Falha ao autenticar',
     });
