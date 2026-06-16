@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { loginMockAccount } from '../../_services/auth-service';
 import { setAuthSession } from '@/app/lib/auth-session';
 
+const AUTH_TOKEN_STORAGE_KEY = 'mcintosh-bank:auth-token';
+
 type LoginFormLayout = 'page' | 'modal';
 
 type LoginFormProps = {
@@ -57,6 +59,7 @@ export function LoginForm({ layout = 'page' }: LoginFormProps) {
     const result = await loginMockAccount(payload);
 
     if (result.ok) {
+      sessionStorage.setItem(AUTH_TOKEN_STORAGE_KEY, result.token);
       setAuthSession({
         token: result.token,
         user: result.user,

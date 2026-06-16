@@ -103,6 +103,31 @@ async function postJson(
   }
 }
 
+async function fetchAuthenticatedMockUserByEmail(email: string) {
+  try {
+    const response = await fetch('/api/mock/users');
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const body = (await response.json().catch(() => null)) as { users?: unknown } | null;
+
+    if (!body || !Array.isArray(body.users)) {
+      return null;
+    }
+
+    return (
+      body.users.find(
+        (user): user is AuthenticatedMockUser =>
+          isAuthenticatedMockUser(user) && user.email.toLowerCase() === email.toLowerCase()
+      ) ?? null
+    );
+  } catch {
+    return null;
+  }
+}
+
 function isStatementEntry(value: unknown): value is AuthStatementEntry {
   if (!value || typeof value !== 'object') {
     return false;
@@ -138,7 +163,7 @@ function isAuthenticatedMockUser(value: unknown): value is AuthenticatedMockUser
 }
 
 export async function registerMockAccount(payload: RegisterMockAccountPayload) {
-  const result = await postJson('/api/mock/users', payload, {
+  const result = await postJson('http://localhost:3333/users', payload, {
     fallbackSuccessMessage: 'Usuario criado com sucesso.',
     fallbackErrorMessage: 'Nao foi possivel criar a conta. Tente novamente.',
   });
@@ -150,21 +175,26 @@ export async function registerMockAccount(payload: RegisterMockAccountPayload) {
 }
 
 export async function loginMockAccount(payload: LoginMockAccountPayload) {
-  const result = await postJson('/api/mock/login', payload, {
+  const result = await postJson('http://localhost:3333/login', payload, {
     fallbackSuccessMessage: 'Login realizado com sucesso.',
     fallbackErrorMessage: 'Nao foi possivel autenticar. Revise seus dados.',
   });
 
-  if (
-    result.ok &&
-    typeof result.body?.token === 'string' &&
-    isAuthenticatedMockUser(result.body.user)
-  ) {
+  if (result.ok && typeof result.body?.token === 'string') {
+    const user = await fetchAuthenticatedMockUserByEmail(payload.email);
+
+    if (user) {
+      return {
+        ok: true as const,
+        message: result.message,
+        token: result.body.token,
+        user,
+      };
+    }
+
     return {
-      ok: true as const,
-      message: result.message,
-      token: result.body.token,
-      user: result.body.user,
+      ok: false as const,
+      message: 'Nao foi possivel autenticar. Revise seus dados.',
     };
   }
 

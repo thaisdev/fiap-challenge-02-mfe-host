@@ -131,6 +131,7 @@ describe('LoginForm', () => {
         ],
       },
     });
+    expect(sessionStorage.getItem('mcintosh-bank:auth-token')).toBe('mock-token-user-1');
   });
 
   it('usa fallback vazio quando FormData retorna null', async () => {
