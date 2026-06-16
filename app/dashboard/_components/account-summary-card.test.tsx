@@ -10,7 +10,7 @@ describe("AccountSummaryCard", () => {
         dateLabel="Quinta-feira, 08/09/2024"
         balanceLabel="Saldo"
         accountLabel="Conta corrente"
-        balanceInCents={250000}
+        balance={2500}
         isBalanceVisible
         onToggleBalanceVisibility={() => {}}
       />
@@ -33,7 +33,7 @@ describe("AccountSummaryCard", () => {
         dateLabel="Quinta-feira, 08/09/2024"
         balanceLabel="Saldo"
         accountLabel="Conta corrente"
-        balanceInCents={250000}
+        balance={2500}
         isBalanceVisible={false}
         onToggleBalanceVisibility={onToggleBalanceVisibility}
       />

@@ -11,14 +11,14 @@ export enum AccountActionType {
 }
 
 export type AccountState = {
-  currentBalanceInCents: number;
+  currentBalance: number;
   currentStatementEntries: StatementEntry[];
 };
 
 export type AccountAction =
   | {
       type: AccountActionType.HYDRATE_FROM_PROPS;
-      balanceInCents: number;
+      balance: number;
       statementEntries: readonly StatementEntry[];
     }
   | {
@@ -38,12 +38,20 @@ export type AccountAction =
       nextDate: string;
     };
 
+function centsToReais(amountInCents: number): number {
+  return Math.round(amountInCents) / 100;
+}
+
+function roundToCentsPrecision(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export function createAccountState(
-  balanceInCents: number,
+  balance: number,
   statementEntries: readonly StatementEntry[]
 ): AccountState {
   return {
-    currentBalanceInCents: balanceInCents,
+    currentBalance: balance,
     currentStatementEntries: [...statementEntries],
   };
 }
@@ -51,11 +59,13 @@ export function createAccountState(
 export function accountReducer(state: AccountState, action: AccountAction): AccountState {
   switch (action.type) {
     case AccountActionType.HYDRATE_FROM_PROPS:
-      return createAccountState(action.balanceInCents, action.statementEntries);
+      return createAccountState(action.balance, action.statementEntries);
 
     case AccountActionType.APPEND_TRANSACTION_ENTRY:
       return {
-        currentBalanceInCents: state.currentBalanceInCents + action.entry.amountInCents,
+        currentBalance: roundToCentsPrecision(
+          state.currentBalance + centsToReais(action.entry.amountInCents)
+        ),
         currentStatementEntries: [action.entry, ...state.currentStatementEntries],
       };
 
@@ -68,7 +78,9 @@ export function accountReducer(state: AccountState, action: AccountAction): Acco
       }
 
       return {
-        currentBalanceInCents: state.currentBalanceInCents - entryToDelete.amountInCents,
+        currentBalance: roundToCentsPrecision(
+          state.currentBalance - centsToReais(entryToDelete.amountInCents)
+        ),
         currentStatementEntries: state.currentStatementEntries.filter(
           (entry) => entry.id !== action.entryId
         ),
@@ -89,8 +101,11 @@ export function accountReducer(state: AccountState, action: AccountAction): Acco
           : Math.abs(action.nextAmountInCents);
 
       return {
-        currentBalanceInCents:
-          state.currentBalanceInCents - entryToEdit.amountInCents + normalizedAmountInCents,
+        currentBalance: roundToCentsPrecision(
+          state.currentBalance -
+            centsToReais(entryToEdit.amountInCents) +
+            centsToReais(normalizedAmountInCents)
+        ),
         currentStatementEntries: state.currentStatementEntries.map((entry) =>
           entry.id === action.entryId
             ? {

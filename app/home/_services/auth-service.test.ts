@@ -128,7 +128,7 @@ describe('auth-service', () => {
               name: 'Joana',
               email: 'joana@mail.com',
               createdAt: '2026-01-01T00:00:00.000Z',
-              accountBalanceInCents: 250000,
+              accountBalance: 2500,
               statementEntries: [
                 {
                   id: 'entry-1',
@@ -169,7 +169,7 @@ describe('auth-service', () => {
         name: 'Joana',
         email: 'joana@mail.com',
         createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalanceInCents: 250000,
+        accountBalance: 2500,
         statementEntries: [
           {
             id: 'entry-1',
@@ -262,7 +262,7 @@ describe('auth-service', () => {
               name: 'Joana',
               email: 'joana@mail.com',
               createdAt: '2026-01-01T00:00:00.000Z',
-              accountBalanceInCents: 250000,
+              accountBalance: 2500,
               statementEntries: [123],
             },
           ],

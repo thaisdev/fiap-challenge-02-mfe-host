@@ -45,7 +45,7 @@ type AuthSessionContextValue = {
   session: AuthSession | null;
   status: AuthSessionStatus;
   statementEntries: StatementEntry[];
-  balanceInCents: number;
+  balance: number;
   onSubmitTransaction: (payload: NewTransactionPayload) => NewTransactionResult;
   onDeleteStatementEntry: (entryId: string) => void;
   onEditStatementEntry: (payload: EditStatementEntryPayload) => NewTransactionResult;
@@ -137,11 +137,11 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         ? 'authenticated'
         : 'unauthenticated';
 
-  const initialBalanceInCents = session?.user.accountBalanceInCents ?? 0;
+  const initialBalance = session?.user.accountBalance ?? 0;
   const initialStatementEntries = session?.user.statementEntries ?? [];
   const [accountState, dispatchAccountAction] = useReducer(
     accountReducer,
-    createAccountState(initialBalanceInCents, initialStatementEntries)
+    createAccountState(initialBalance, initialStatementEntries)
   );
   const transactionDateRange = getTransactionDateRange();
   const lastHydratedSnapshotRef = useRef<string | null>(null);
@@ -159,7 +159,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     lastHydratedSnapshotRef.current = serializedSession;
     dispatchAccountAction({
       type: AccountActionType.HYDRATE_FROM_PROPS,
-      balanceInCents: session.user.accountBalanceInCents,
+      balance: session.user.accountBalance,
       statementEntries: session.user.statementEntries ?? [],
     });
   }, [serializedSession, session]);
@@ -169,7 +169,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     amountInCents,
     transactionDate,
   }: NewTransactionPayload): NewTransactionResult => {
-    if (type === TransactionType.TRANSFER && amountInCents > accountState.currentBalanceInCents) {
+    if (type === TransactionType.TRANSFER && amountInCents / 100 > accountState.currentBalance) {
       return {
         ok: false,
         message: 'Saldo insuficiente para concluir a transferência.',
@@ -226,10 +226,12 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
 
     const nextSignedAmountInCents =
       type === TransactionType.DEPOSIT ? amountInCents : -amountInCents;
-    const projectedBalanceInCents =
-      accountState.currentBalanceInCents - entryToEdit.amountInCents + nextSignedAmountInCents;
+    const projectedBalance =
+      accountState.currentBalance -
+      entryToEdit.amountInCents / 100 +
+      nextSignedAmountInCents / 100;
 
-    if (projectedBalanceInCents < 0) {
+    if (projectedBalance < 0) {
       return {
         ok: false,
         message: 'Saldo insuficiente para concluir a transferência.',
@@ -260,7 +262,7 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         onDeleteStatementEntry,
         onEditStatementEntry,
         statementEntries: accountState.currentStatementEntries,
-        balanceInCents: accountState.currentBalanceInCents,
+        balance: accountState.currentBalance,
       }}
     >
       {children}

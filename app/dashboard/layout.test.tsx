@@ -27,7 +27,7 @@ function authenticatedContext(name = 'Joana da Silva Oliveira') {
       },
     },
     status: 'authenticated',
-    balanceInCents: 250000,
+    balance: 2500,
     statementEntries: [
       {
         id: '3',

@@ -24,7 +24,7 @@ export type AuthenticatedMockUser = {
   name: string;
   email: string;
   createdAt: string;
-  accountBalanceInCents: number;
+  accountBalance: number;
   statementEntries: AuthStatementEntry[];
 };
 
@@ -156,7 +156,7 @@ function isAuthenticatedMockUser(value: unknown): value is AuthenticatedMockUser
     typeof user.name === 'string' &&
     typeof user.email === 'string' &&
     typeof user.createdAt === 'string' &&
-    typeof user.accountBalanceInCents === 'number' &&
+    typeof user.accountBalance === 'number' &&
     Array.isArray(user.statementEntries) &&
     user.statementEntries.every(isStatementEntry)
   );

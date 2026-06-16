@@ -89,7 +89,7 @@ describe("mock-auth", () => {
         email: "legado@mail.com",
         password: "senha-segura",
         createdAt: "2026-04-01T12:00:00.000Z",
-        accountBalanceInCents: 250000,
+        accountBalance: 2500,
         statementEntries: [],
       },
     ];

@@ -27,7 +27,7 @@ const baseSession: AuthSession = {
     name: 'Joana Silva',
     email: 'joana@mcintoshbank.com.br',
     createdAt: '2026-04-01T12:00:00.000Z',
-    accountBalanceInCents: 25000,
+    accountBalance: 250,
     statementEntries: [
       {
         id: 'entry-1',
@@ -58,7 +58,7 @@ function Consumer({ onValue }: { onValue: (value: CapturedContext) => void }) {
   return (
     <div>
       <span data-testid="status">{context.status}</span>
-      <span data-testid="balance">{context.balanceInCents}</span>
+      <span data-testid="balance">{context.balance}</span>
       <span data-testid="entries">{context.statementEntries.length}</span>
     </div>
   );
@@ -127,7 +127,7 @@ describe('AuthSessionProvider', () => {
 
     expect(context.status satisfies AuthSessionStatus).toBe('authenticated');
     expect(context.session?.user.name).toBe('Joana Silva');
-    expect(context.balanceInCents).toBe(25000);
+    expect(context.balance).toBe(250);
     expect(context.statementEntries.length).toBeGreaterThanOrEqual(2);
 
     act(() => {
@@ -141,7 +141,7 @@ describe('AuthSessionProvider', () => {
     });
 
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
-    expect(context.balanceInCents).toBe(28000);
+    expect(context.balance).toBe(280);
     expect(context.statementEntries[0]).toMatchObject({
       id: 'entry-random-id',
       type: StatementEntryType.DEPOSIT,
@@ -169,7 +169,7 @@ describe('AuthSessionProvider', () => {
     });
 
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
-    expect(context.balanceInCents).toBe(32000);
+    expect(context.balance).toBe(320);
     expect(context.statementEntries.some((entry) => entry.id === 'entry-2')).toBe(false);
 
     act(() => {
@@ -311,7 +311,7 @@ describe('AuthSessionProvider', () => {
 
     const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     expect(context.status).toBe('authenticated');
-    expect(screen.getByTestId('balance')).toHaveTextContent('25000');
+    expect(screen.getByTestId('balance')).toHaveTextContent('250');
   });
 
   it('reage apenas a storage events da sessao autenticada', () => {
@@ -381,7 +381,7 @@ describe('AuthSessionProvider', () => {
     const stored = JSON.parse(
       window.sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY) ?? '{}'
     ) as AuthSession;
-    expect(stored.user.accountBalanceInCents).toBe(123456);
+    expect(stored.user.accountBalance).toBe(1234.56);
     expect(stored.user.statementEntries.length).toBeGreaterThan(0);
   });
 });

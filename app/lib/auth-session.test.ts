@@ -24,7 +24,7 @@ describe('auth-session', () => {
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
         createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalanceInCents: 250000,
+        accountBalance: 2500,
         statementEntries: [
           {
             id: 'entry-1',
@@ -40,7 +40,7 @@ describe('auth-session', () => {
     expect(normalized).not.toBeNull();
     expect(normalized?.token).toBe('mock-token-user-1');
     expect(normalized?.user.id).toBe('user-1');
-    expect(normalized?.user.accountBalanceInCents).toBe(250000);
+    expect(normalized?.user.accountBalance).toBe(2500);
     expect(normalized?.user.statementEntries).toHaveLength(8);
     expect(normalized?.user.statementEntries).toEqual(
       expect.arrayContaining([
@@ -85,7 +85,7 @@ describe('auth-session', () => {
       })
     );
 
-    expect(parsed?.user.accountBalanceInCents).toBe(250000);
+    expect(parsed?.user.accountBalance).toBe(2500);
     expect(parsed?.user.statementEntries).toHaveLength(8);
     expect(parsed?.user.statementEntries).toEqual(
       expect.arrayContaining([
@@ -138,7 +138,7 @@ describe('auth-session', () => {
     expect(normalized).toBeNull();
   });
 
-  it('retorna null quando saldo legado nao e string', () => {
+  it('retorna null quando saldo nao e number nem string', () => {
     const normalized = normalizeAuthSession({
       token: 'mock-token-user-1',
       user: {
@@ -146,7 +146,7 @@ describe('auth-session', () => {
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
         createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 250000,
+        accountBalance: true,
         statementEntries: [],
       },
     });
@@ -162,7 +162,7 @@ describe('auth-session', () => {
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
         createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalanceInCents: 250000,
+        accountBalance: 2500,
         statementEntries: 'invalido',
       },
     });
@@ -170,7 +170,7 @@ describe('auth-session', () => {
     expect(normalized).not.toBeNull();
     expect(normalized?.token).toBe('mock-token-user-1');
     expect(normalized?.user.id).toBe('user-1');
-    expect(normalized?.user.accountBalanceInCents).toBe(250000);
+    expect(normalized?.user.accountBalance).toBe(2500);
     expect(normalized?.user.statementEntries).toHaveLength(8);
   });
 
@@ -183,7 +183,7 @@ describe('auth-session', () => {
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
         createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalanceInCents: 250000,
+        accountBalance: 2500,
         statementEntries: [],
       },
     };
@@ -220,7 +220,7 @@ describe('auth-session', () => {
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
         createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalanceInCents: 250000,
+        accountBalance: 2500,
         statementEntries: [],
       },
     };
@@ -254,7 +254,7 @@ describe('auth-session', () => {
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
         createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalanceInCents: 250000,
+        accountBalance: 2500,
         statementEntries: [],
       },
     };

@@ -26,28 +26,28 @@ const baseEntries = [
 
 describe('account.reducer', () => {
   it('cria estado inicial com clone do extrato', () => {
-    const state = createAccountState(250000, baseEntries);
+    const state = createAccountState(2500, baseEntries);
 
-    expect(state.currentBalanceInCents).toBe(250000);
+    expect(state.currentBalance).toBe(2500);
     expect(state.currentStatementEntries).toEqual(baseEntries);
     expect(state.currentStatementEntries).not.toBe(baseEntries);
   });
 
   it('hidrata estado a partir das props', () => {
-    const initialState = createAccountState(100, []);
+    const initialState = createAccountState(1, []);
 
     const nextState = accountReducer(initialState, {
       type: AccountActionType.HYDRATE_FROM_PROPS,
-      balanceInCents: 250000,
+      balance: 2500,
       statementEntries: baseEntries,
     });
 
-    expect(nextState.currentBalanceInCents).toBe(250000);
+    expect(nextState.currentBalance).toBe(2500);
     expect(nextState.currentStatementEntries).toEqual(baseEntries);
   });
 
   it('adiciona lancamento e atualiza saldo', () => {
-    const initialState = createAccountState(250000, baseEntries);
+    const initialState = createAccountState(2500, baseEntries);
     const newEntry = {
       id: '3',
       month: 'Novembro',
@@ -61,25 +61,25 @@ describe('account.reducer', () => {
       entry: newEntry,
     });
 
-    expect(nextState.currentBalanceInCents).toBe(257000);
+    expect(nextState.currentBalance).toBe(2570);
     expect(nextState.currentStatementEntries[0]).toEqual(newEntry);
   });
 
   it('remove lancamento existente e reverte saldo', () => {
-    const initialState = createAccountState(250000, baseEntries);
+    const initialState = createAccountState(2500, baseEntries);
 
     const nextState = accountReducer(initialState, {
       type: AccountActionType.DELETE_STATEMENT_ENTRY,
       entryId: '2',
     });
 
-    expect(nextState.currentBalanceInCents).toBe(255000);
+    expect(nextState.currentBalance).toBe(2550);
     expect(nextState.currentStatementEntries).toHaveLength(1);
     expect(nextState.currentStatementEntries[0]?.id).toBe('1');
   });
 
   it('mantem estado quando delete recebe id inexistente', () => {
-    const initialState = createAccountState(250000, baseEntries);
+    const initialState = createAccountState(2500, baseEntries);
 
     const nextState = accountReducer(initialState, {
       type: AccountActionType.DELETE_STATEMENT_ENTRY,
@@ -90,7 +90,7 @@ describe('account.reducer', () => {
   });
 
   it('edita transferencia normalizando para valor negativo', () => {
-    const initialState = createAccountState(250000, baseEntries);
+    const initialState = createAccountState(2500, baseEntries);
 
     const nextState = accountReducer(initialState, {
       type: AccountActionType.EDIT_STATEMENT_ENTRY,
@@ -101,7 +101,7 @@ describe('account.reducer', () => {
       nextDate: '10/12/2022',
     });
 
-    expect(nextState.currentBalanceInCents).toBe(248000);
+    expect(nextState.currentBalance).toBe(2480);
     const editedTransfer = nextState.currentStatementEntries.find((entry) => entry.id === '2');
     expect(editedTransfer?.amountInCents).toBe(-7000);
     expect(editedTransfer?.type).toBe(StatementEntryType.TRANSFER);
@@ -110,7 +110,7 @@ describe('account.reducer', () => {
   });
 
   it('edita deposito normalizando para valor positivo', () => {
-    const initialState = createAccountState(250000, baseEntries);
+    const initialState = createAccountState(2500, baseEntries);
 
     const nextState = accountReducer(initialState, {
       type: AccountActionType.EDIT_STATEMENT_ENTRY,
@@ -121,7 +121,7 @@ describe('account.reducer', () => {
       nextDate: '02/01/2023',
     });
 
-    expect(nextState.currentBalanceInCents).toBe(255000);
+    expect(nextState.currentBalance).toBe(2550);
     const editedDeposit = nextState.currentStatementEntries.find((entry) => entry.id === '1');
     expect(editedDeposit?.amountInCents).toBe(20000);
     expect(editedDeposit?.type).toBe(StatementEntryType.DEPOSIT);
@@ -130,7 +130,7 @@ describe('account.reducer', () => {
   });
 
   it('mantem estado quando edit recebe id inexistente', () => {
-    const initialState = createAccountState(250000, baseEntries);
+    const initialState = createAccountState(2500, baseEntries);
 
     const nextState = accountReducer(initialState, {
       type: AccountActionType.EDIT_STATEMENT_ENTRY,
@@ -145,7 +145,7 @@ describe('account.reducer', () => {
   });
 
   it('retorna estado atual para acao desconhecida', () => {
-    const initialState = createAccountState(250000, baseEntries);
+    const initialState = createAccountState(2500, baseEntries);
 
     const nextState = accountReducer(initialState, {
       type: 'acao-desconhecida',

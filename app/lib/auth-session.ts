@@ -15,7 +15,7 @@ function isRecord(value: unknown): value is UnknownRecord {
   return !!value && typeof value === 'object';
 }
 
-function parseCurrencyStringToCents(value: string): number | null {
+function parseCurrencyStringToNumber(value: string): number | null {
   const normalized = value
     .trim()
     .replace(/\s/g, '')
@@ -24,11 +24,13 @@ function parseCurrencyStringToCents(value: string): number | null {
     .replace(',', '.');
   const numericValue = Number(normalized);
 
-  if (!Number.isFinite(numericValue)) {
-    return null;
-  }
+  return Number.isFinite(numericValue) ? numericValue : null;
+}
 
-  return Math.round(numericValue * 100);
+function parseCurrencyStringToCents(value: string): number | null {
+  const numericValue = parseCurrencyStringToNumber(value);
+
+  return numericValue === null ? null : Math.round(numericValue * 100);
 }
 
 function normalizeStatementEntry(
@@ -115,11 +117,11 @@ export function normalizeAuthSession(value: unknown): AuthSession | null {
     return null;
   }
 
-  const accountBalanceInCents =
-    typeof value.user.accountBalanceInCents === 'number'
-      ? value.user.accountBalanceInCents
+  const accountBalance =
+    typeof value.user.accountBalance === 'number'
+      ? value.user.accountBalance
       : typeof value.user.accountBalance === 'string'
-        ? parseCurrencyStringToCents(value.user.accountBalance)
+        ? parseCurrencyStringToNumber(value.user.accountBalance)
         : null;
 
   const rawEntries = Array.isArray(value.user.statementEntries) ? value.user.statementEntries : [];
@@ -133,7 +135,7 @@ export function normalizeAuthSession(value: unknown): AuthSession | null {
     typeof value.user.name !== 'string' ||
     typeof value.user.email !== 'string' ||
     typeof value.user.createdAt !== 'string' ||
-    accountBalanceInCents === null
+    accountBalance === null
   ) {
     return null;
   }
@@ -145,7 +147,7 @@ export function normalizeAuthSession(value: unknown): AuthSession | null {
       name: value.user.name,
       email: value.user.email,
       createdAt: value.user.createdAt,
-      accountBalanceInCents,
+      accountBalance,
       statementEntries,
     },
   };

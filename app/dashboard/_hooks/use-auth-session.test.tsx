@@ -32,7 +32,7 @@ describe('useAuthSession', () => {
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
           createdAt: '2026-01-01T00:00:00.000Z',
-          accountBalanceInCents: 250000,
+          accountBalance: 2500,
           statementEntries: [
             {
               id: 'entry-1',
@@ -53,7 +53,7 @@ describe('useAuthSession', () => {
     });
 
     expect(result.current.session?.user.name).toBe('Joana da Silva Oliveira');
-    expect(result.current.session?.user.accountBalanceInCents).toBe(250000);
+    expect(result.current.session?.user.accountBalance).toBe(2500);
   });
 
   it('retorna unauthenticated quando json salvo esta invalido', async () => {
@@ -84,7 +84,7 @@ describe('useAuthSession', () => {
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
           createdAt: '2026-01-01T00:00:00.000Z',
-          accountBalanceInCents: 250000,
+          accountBalance: 2500,
           statementEntries: [],
         },
       })
@@ -148,7 +148,7 @@ describe('useAuthSession', () => {
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
           createdAt: '2026-01-01T00:00:00.000Z',
-          accountBalanceInCents: 250000,
+          accountBalance: 2500,
           statementEntries: [],
         },
       })
@@ -198,7 +198,6 @@ describe('useAuthSession', () => {
     ) as Record<string, unknown>;
     const normalizedUser = normalizedSession.user as Record<string, unknown>;
 
-    expect(normalizedUser.accountBalanceInCents).toBe(250000);
-    expect(normalizedUser).not.toHaveProperty('accountBalance');
+    expect(normalizedUser.accountBalance).toBe(2500);
   });
 });

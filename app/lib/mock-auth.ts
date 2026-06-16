@@ -4,7 +4,7 @@
   email: string;
   password: string;
   createdAt: string;
-  accountBalanceInCents: number;
+  accountBalance: number;
   statementEntries: MockStatementEntry[];
 };
 
@@ -61,7 +61,7 @@ function toPublicUser(user: MockUser): PublicMockUser {
     name: user.name,
     email: user.email,
     createdAt: user.createdAt,
-    accountBalanceInCents: user.accountBalanceInCents,
+    accountBalance: user.accountBalance,
     statementEntries: user.statementEntries.map((entry) => ({ ...entry })),
   };
 }
@@ -175,7 +175,7 @@ export function registerMockUser({
     email: normalizedEmail,
     password,
     createdAt: new Date().toISOString(),
-    accountBalanceInCents: 250000,
+    accountBalance: 2500,
     statementEntries: createDefaultStatementEntries(),
   };
 
