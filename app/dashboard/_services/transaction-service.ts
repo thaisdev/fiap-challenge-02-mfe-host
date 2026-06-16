@@ -13,7 +13,7 @@ type ServiceMessageResponse = {
 };
 
 function accountTransactionsUrl(userId: number) {
-  return `http://localhost:3333/users/${userId}/account/transactions`;
+  return `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/account/transactions`;
 }
 
 async function sendTransactionRequest(
