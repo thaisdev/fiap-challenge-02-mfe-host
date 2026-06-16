@@ -22,7 +22,7 @@ import { TransactionType } from './interfaces/statement-panel.interfaces';
 type EditStatementEntryModalProps = {
   entry: Transaction;
   onClose: () => void;
-  onSubmit?: (payload: EditTransactionPayload) => EditTransactionResult | void;
+  onSubmit?: (payload: EditTransactionPayload) => Promise<EditTransactionResult> | EditTransactionResult | void;
 };
 
 function parseCurrencyInputToValue(value: string) {
@@ -57,6 +57,7 @@ export function EditStatementEntryModal({
     () => dateOnlyFromTransactionDate(entry.date) ?? getDefaultTransactionDate()
   );
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
     { value: TransactionType.DEPOSIT, label: 'Depósito' },
     { value: TransactionType.TRANSFER, label: 'Transferência' },
@@ -68,7 +69,7 @@ export function EditStatementEntryModal({
   );
   const isAmountValid = value > 0;
   const isDateValid = isTransactionDateWithinRange(transactionDate, calendarRange);
-  const isFormValid = isAmountValid && isDateValid;
+  const isFormValid = isAmountValid && isDateValid && !isSubmitting;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -89,19 +90,27 @@ export function EditStatementEntryModal({
       return;
     }
 
-    const result = onSubmit?.({
-      transactionId: entry.id,
-      type: transactionType,
-      value,
-      transactionDate,
-    });
+    setIsSubmitting(true);
 
-    if (result && !result.ok) {
-      setFeedback(result.message);
-      return;
-    }
+    Promise.resolve(
+      onSubmit?.({
+        transactionId: entry.id,
+        type: transactionType,
+        value,
+        transactionDate,
+      })
+    )
+      .then((result) => {
+        if (result && !result.ok) {
+          setFeedback(result.message);
+          return;
+        }
 
-    onClose();
+        onClose();
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   return (

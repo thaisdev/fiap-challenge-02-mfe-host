@@ -35,6 +35,7 @@ export function NewTransactionPanel() {
   const [transactionAmount, setTransactionAmount] = useState('00,00');
   const [transactionDate, setTransactionDate] = useState(() => getDefaultTransactionDate());
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
     { value: TransactionType.DEPOSIT, label: 'Depósito' },
     { value: TransactionType.TRANSFER, label: 'Transferência' },
@@ -47,7 +48,7 @@ export function NewTransactionPanel() {
   const isAmountValid = value > 0;
 
   const isDateValid = isTransactionDateWithinRange(transactionDate, calendarRange);
-  const isFormValid = transactionType !== '' && isAmountValid && isDateValid;
+  const isFormValid = transactionType !== '' && isAmountValid && isDateValid && !isSubmitting;
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -68,20 +69,26 @@ export function NewTransactionPanel() {
       return;
     }
 
-    const result = onSubmitTransaction({
+    setIsSubmitting(true);
+
+    onSubmitTransaction({
       type: transactionType,
       value,
       transactionDate,
-    });
+    })
+      .then((result) => {
+        if (result && !result.ok) {
+          setFeedback(result.message);
+          return;
+        }
 
-    if (result && !result.ok) {
-      setFeedback(result.message);
-      return;
-    }
-
-    setTransactionType('');
-    setTransactionAmount('00,00');
-    setTransactionDate(getDefaultTransactionDate());
+        setTransactionType('');
+        setTransactionAmount('00,00');
+        setTransactionDate(getDefaultTransactionDate());
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   return (

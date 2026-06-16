@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { EditStatementEntryModal } from './edit-statement-entry-modal';
 import {
@@ -36,6 +37,7 @@ export function StatementPanel({
   const panelRef = useRef<HTMLElement | null>(null);
   const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null);
   const [editingTransactionId, setEditingTransactionId] = useState<number | null>(null);
+  const [deleteFeedback, setDeleteFeedback] = useState<string | null>(null);
 
   const selectedTransaction =
     visibleTransactions.find((transaction) => transaction.id === selectedTransactionId) ?? null;
@@ -70,8 +72,14 @@ export function StatementPanel({
       return;
     }
 
-    onDeleteTransaction(activeSelectedTransactionId);
+    setDeleteFeedback(null);
     setEditingTransactionId(null);
+
+    onDeleteTransaction(activeSelectedTransactionId).then((result) => {
+      if (!result.ok) {
+        setDeleteFeedback(result.message);
+      }
+    });
   };
 
   const handleEditSelectedTransaction = () => {
@@ -127,6 +135,12 @@ export function StatementPanel({
             </div>
           ) : null}
         </div>
+
+        {deleteFeedback ? (
+          <div className="mt-3">
+            <Alert variant="error" message={deleteFeedback} onClose={() => setDeleteFeedback(null)} />
+          </div>
+        ) : null}
 
         <ul className="mt-3 space-y-3">
           {visibleTransactions.map((transaction) => (

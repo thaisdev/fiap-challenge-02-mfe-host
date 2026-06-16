@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StatementPanel } from './statement-panel';
 import { TransactionType } from './interfaces/statement-panel.interfaces';
@@ -27,7 +27,8 @@ describe('StatementPanel', () => {
   beforeEach(() => {
     onDeleteTransactionMock.mockReset();
     onEditTransactionMock.mockReset();
-    onEditTransactionMock.mockReturnValue({ ok: true as const });
+    onDeleteTransactionMock.mockResolvedValue({ ok: true as const });
+    onEditTransactionMock.mockResolvedValue({ ok: true as const });
   });
 
   it('renderiza titulo e lancamentos do extrato e habilita acoes ao selecionar item', () => {
@@ -85,7 +86,7 @@ describe('StatementPanel', () => {
     expect(screen.queryByRole('button', { name: 'Excluir extrato' })).not.toBeInTheDocument();
   });
 
-  it('abre modal de edicao e envia payload completo de tipo, valor e data', () => {
+  it('abre modal de edicao e envia payload completo de tipo, valor e data', async () => {
     render(
       <StatementPanel
         entries={[
@@ -125,11 +126,14 @@ describe('StatementPanel', () => {
       value: 700,
       transactionDate: '2026-04-22',
     });
-    expect(screen.queryByRole('heading', { name: /Editar trans/i })).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: /Editar trans/i })).not.toBeInTheDocument();
+    });
   });
 
-  it('mantem modal aberto e mostra alerta quando a edicao retorna erro', () => {
-    onEditTransactionMock.mockReturnValue({
+  it('mantem modal aberto e mostra alerta quando a edicao retorna erro', async () => {
+    onEditTransactionMock.mockResolvedValue({
       ok: false as const,
       message: 'Saldo insuficiente para concluir a transferencia.',
     });
@@ -155,7 +159,10 @@ describe('StatementPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: /Salvar edi/i }));
 
     expect(onEditTransactionMock).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('alert')).toHaveTextContent('Saldo insuficiente');
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Saldo insuficiente');
+    });
     expect(screen.getByRole('heading', { name: /Editar trans/i })).toBeInTheDocument();
   });
 

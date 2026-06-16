@@ -3,6 +3,11 @@
 import { createContext, useContext, useEffect, useReducer, useState, type ReactNode } from 'react';
 import type { AuthSession } from '@/app/lib/auth-session';
 import { fetchAccountByUserId } from '@/app/home/_services/auth-service';
+import {
+  addTransaction,
+  deleteTransaction,
+  updateTransaction,
+} from '../_services/transaction-service';
 import type {
   NewTransactionPayload,
   NewTransactionResult,
@@ -26,9 +31,9 @@ type AccountContextValue = {
   errorMessage: string | null;
   balance: number;
   transactions: Transaction[];
-  onSubmitTransaction: (payload: NewTransactionPayload) => NewTransactionResult;
-  onDeleteTransaction: (transactionId: number) => void;
-  onEditTransaction: (payload: EditTransactionPayload) => NewTransactionResult;
+  onSubmitTransaction: (payload: NewTransactionPayload) => Promise<NewTransactionResult>;
+  onDeleteTransaction: (transactionId: number) => Promise<NewTransactionResult>;
+  onEditTransaction: (payload: EditTransactionPayload) => Promise<NewTransactionResult>;
 };
 
 const AccountContext = createContext<AccountContextValue | null>(null);
@@ -65,6 +70,29 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
   const userId = session.user.id;
   const { token } = session;
 
+  const applyAccountResult = (
+    result: { ok: true; account: { balance: number; transactions: readonly Transaction[] } } | { ok: false; message: string }
+  ) => {
+    if (result.ok) {
+      dispatchAccountAction({
+        type: AccountActionType.HYDRATE_FROM_PROPS,
+        balance: result.account.balance,
+        transactions: result.account.transactions,
+      });
+      setErrorMessage(null);
+      setStatus('ready');
+      return;
+    }
+
+    setErrorMessage(result.message);
+    setStatus('error');
+  };
+
+  const loadAccount = async () => {
+    const result = await fetchAccountByUserId(userId, token);
+    applyAccountResult(result);
+  };
+
   useEffect(() => {
     let isCurrent = true;
 
@@ -73,19 +101,7 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
         return;
       }
 
-      if (result.ok) {
-        dispatchAccountAction({
-          type: AccountActionType.HYDRATE_FROM_PROPS,
-          balance: result.account.balance,
-          transactions: result.account.transactions,
-        });
-        setErrorMessage(null);
-        setStatus('ready');
-        return;
-      }
-
-      setErrorMessage(result.message);
-      setStatus('error');
+      applyAccountResult(result);
     });
 
     return () => {
@@ -93,11 +109,11 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
     };
   }, [userId, token]);
 
-  const onSubmitTransaction = ({
+  const onSubmitTransaction = async ({
     type,
     value,
     transactionDate,
-  }: NewTransactionPayload): NewTransactionResult => {
+  }: NewTransactionPayload): Promise<NewTransactionResult> => {
     if (type === TransactionType.TRANSFER && value > accountState.balance) {
       return {
         ok: false,
@@ -114,29 +130,35 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
     }
 
     const transaction = createTransaction({ type, value }, isoDate);
-    dispatchAccountAction({
-      type: AccountActionType.APPEND_TRANSACTION,
-      transaction,
-    });
+    const result = await addTransaction(userId, token, transaction);
 
-    return {
-      ok: true,
-    };
+    if (!result.ok) {
+      return result;
+    }
+
+    await loadAccount();
+
+    return { ok: true };
   };
 
-  const onDeleteTransaction = (transactionId: number) => {
-    dispatchAccountAction({
-      type: AccountActionType.DELETE_TRANSACTION,
-      transactionId,
-    });
+  const onDeleteTransaction = async (transactionId: number): Promise<NewTransactionResult> => {
+    const result = await deleteTransaction(userId, token, transactionId);
+
+    if (!result.ok) {
+      return result;
+    }
+
+    await loadAccount();
+
+    return { ok: true };
   };
 
-  const onEditTransaction = ({
+  const onEditTransaction = async ({
     transactionId,
     type,
     value,
     transactionDate,
-  }: EditTransactionPayload): NewTransactionResult => {
+  }: EditTransactionPayload): Promise<NewTransactionResult> => {
     const transactionToEdit = accountState.transactions.find(
       (transaction) => transaction.id === transactionId
     );
@@ -169,17 +191,20 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
       };
     }
 
-    dispatchAccountAction({
-      type: AccountActionType.EDIT_TRANSACTION,
-      transactionId,
-      nextValue: value,
-      nextType: type,
-      nextDate: isoDate,
+    const result = await updateTransaction(userId, token, transactionId, {
+      id: transactionId,
+      type,
+      value: Math.abs(value),
+      date: isoDate,
     });
 
-    return {
-      ok: true,
-    };
+    if (!result.ok) {
+      return result;
+    }
+
+    await loadAccount();
+
+    return { ok: true };
   };
 
   return (
