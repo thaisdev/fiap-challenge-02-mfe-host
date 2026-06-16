@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthSessionProvider, useAuthSessionContext } from '@/app/context/auth-session-context';
+import { clearAuthSession } from '@/app/lib/auth-session';
 import { AccountProvider, useAccountContext } from './_state/account-context';
 import { AccountSummaryCard } from './_components/account-summary-card';
 import { DashboardHeader } from './_components/dashboard-header';
@@ -52,10 +53,16 @@ function formatCurrentDateLabel() {
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { session } = useAuthSessionContext();
   const { balance, transactions, errorMessage } = useAccountContext();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<DashboardTabKey>('home');
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [isErrorVisible, setIsErrorVisible] = useState(true);
   const currentDateLabel = useMemo(() => formatCurrentDateLabel(), []);
+
+  const handleLogout = () => {
+    clearAuthSession();
+    router.push('/home/login');
+  };
 
   const orderedTransactions = useMemo(() => {
     return [...transactions].sort((transactionA, transactionB) => {
@@ -91,7 +98,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-background">
-      <DashboardHeader userName={name} />
+      <DashboardHeader userName={name} onLogout={handleLogout} />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-[688px] px-4 pb-10 pt-8 md:pb-10 md:pt-10 desktop:max-w-[1140px] desktop:px-0 desktop:pb-8 desktop:pt-4">
           {errorMessage && isErrorVisible ? (

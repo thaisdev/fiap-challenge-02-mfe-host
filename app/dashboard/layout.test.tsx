@@ -1,17 +1,22 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AUTH_SESSION_STORAGE_KEY } from '@/app/lib/auth-session';
 import DashboardLayout from './layout';
 
-const { replaceMock, useAuthSessionContextMock, useAccountContextMock } = vi.hoisted(() => ({
-  replaceMock: vi.fn(),
-  useAuthSessionContextMock: vi.fn(),
-  useAccountContextMock: vi.fn(),
-}));
+const { replaceMock, pushMock, useAuthSessionContextMock, useAccountContextMock } = vi.hoisted(
+  () => ({
+    replaceMock: vi.fn(),
+    pushMock: vi.fn(),
+    useAuthSessionContextMock: vi.fn(),
+    useAccountContextMock: vi.fn(),
+  })
+);
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     replace: replaceMock,
+    push: pushMock,
   }),
 }));
 
@@ -73,6 +78,8 @@ function accountContext() {
 describe('DashboardLayout', () => {
   beforeEach(() => {
     replaceMock.mockClear();
+    pushMock.mockClear();
+    sessionStorage.clear();
     useAuthSessionContextMock.mockReturnValue(authenticatedSession());
     useAccountContextMock.mockReturnValue(accountContext());
   });
@@ -89,6 +96,22 @@ describe('DashboardLayout', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Ocultar saldo' }));
     expect(screen.getByRole('button', { name: 'Mostrar saldo' })).toBeInTheDocument();
+  });
+
+  it('limpa a sessao e redireciona para login ao clicar em Sair', () => {
+    sessionStorage.setItem(AUTH_SESSION_STORAGE_KEY, JSON.stringify({ token: 'token-123' }));
+
+    render(
+      <DashboardLayout>
+        <main>Conteudo da area de dashboard</main>
+      </DashboardLayout>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Menu do usuario' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Sair' }));
+
+    expect(sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY)).toBeNull();
+    expect(pushMock).toHaveBeenCalledWith('/home/login');
   });
 
   it('exibe alerta de erro quando a busca da conta falha', () => {
