@@ -5,32 +5,30 @@ import {
   createAccountState,
   type AccountAction,
 } from './account.reducer';
-import { StatementEntryType } from '../_components/interfaces/statement-panel.interfaces';
+import { TransactionType } from '../_components/interfaces/statement-panel.interfaces';
 
-const baseEntries = [
+const baseTransactions = [
   {
-    id: '1',
-    month: 'Novembro',
-    type: StatementEntryType.DEPOSIT,
-    amount: 150,
-    date: '18/11/2022',
+    id: 1,
+    type: TransactionType.DEPOSIT,
+    date: '2022-11-18T12:00:00.000Z',
+    value: 150,
   },
   {
-    id: '2',
-    month: 'Novembro',
-    type: StatementEntryType.TRANSFER,
-    amount: -50,
-    date: '21/11/2022',
+    id: 2,
+    type: TransactionType.TRANSFER,
+    date: '2022-11-21T12:00:00.000Z',
+    value: 50,
   },
 ] as const;
 
 describe('account.reducer', () => {
   it('cria estado inicial com clone do extrato', () => {
-    const state = createAccountState(2500, baseEntries);
+    const state = createAccountState(2500, baseTransactions);
 
-    expect(state.currentBalance).toBe(2500);
-    expect(state.currentStatementEntries).toEqual(baseEntries);
-    expect(state.currentStatementEntries).not.toBe(baseEntries);
+    expect(state.balance).toBe(2500);
+    expect(state.transactions).toEqual(baseTransactions);
+    expect(state.transactions).not.toBe(baseTransactions);
   });
 
   it('hidrata estado a partir das props', () => {
@@ -39,113 +37,107 @@ describe('account.reducer', () => {
     const nextState = accountReducer(initialState, {
       type: AccountActionType.HYDRATE_FROM_PROPS,
       balance: 2500,
-      statementEntries: baseEntries,
+      transactions: baseTransactions,
     });
 
-    expect(nextState.currentBalance).toBe(2500);
-    expect(nextState.currentStatementEntries).toEqual(baseEntries);
+    expect(nextState.balance).toBe(2500);
+    expect(nextState.transactions).toEqual(baseTransactions);
   });
 
   it('adiciona lancamento e atualiza saldo', () => {
-    const initialState = createAccountState(2500, baseEntries);
-    const newEntry = {
-      id: '3',
-      month: 'Novembro',
-      type: StatementEntryType.DEPOSIT,
-      amount: 70,
-      date: '21/11/2022',
+    const initialState = createAccountState(2500, baseTransactions);
+    const newTransaction = {
+      id: 3,
+      type: TransactionType.DEPOSIT,
+      date: '2022-11-21T12:00:00.000Z',
+      value: 70,
     };
 
     const nextState = accountReducer(initialState, {
-      type: AccountActionType.APPEND_TRANSACTION_ENTRY,
-      entry: newEntry,
+      type: AccountActionType.APPEND_TRANSACTION,
+      transaction: newTransaction,
     });
 
-    expect(nextState.currentBalance).toBe(2570);
-    expect(nextState.currentStatementEntries[0]).toEqual(newEntry);
+    expect(nextState.balance).toBe(2570);
+    expect(nextState.transactions[0]).toEqual(newTransaction);
   });
 
   it('remove lancamento existente e reverte saldo', () => {
-    const initialState = createAccountState(2500, baseEntries);
+    const initialState = createAccountState(2500, baseTransactions);
 
     const nextState = accountReducer(initialState, {
-      type: AccountActionType.DELETE_STATEMENT_ENTRY,
-      entryId: '2',
+      type: AccountActionType.DELETE_TRANSACTION,
+      transactionId: 2,
     });
 
-    expect(nextState.currentBalance).toBe(2550);
-    expect(nextState.currentStatementEntries).toHaveLength(1);
-    expect(nextState.currentStatementEntries[0]?.id).toBe('1');
+    expect(nextState.balance).toBe(2550);
+    expect(nextState.transactions).toHaveLength(1);
+    expect(nextState.transactions[0]?.id).toBe(1);
   });
 
   it('mantem estado quando delete recebe id inexistente', () => {
-    const initialState = createAccountState(2500, baseEntries);
+    const initialState = createAccountState(2500, baseTransactions);
 
     const nextState = accountReducer(initialState, {
-      type: AccountActionType.DELETE_STATEMENT_ENTRY,
-      entryId: 'inexistente',
+      type: AccountActionType.DELETE_TRANSACTION,
+      transactionId: 999,
     });
 
     expect(nextState).toBe(initialState);
   });
 
-  it('edita transferencia normalizando para valor negativo', () => {
-    const initialState = createAccountState(2500, baseEntries);
+  it('edita transferencia normalizando para valor positivo armazenado', () => {
+    const initialState = createAccountState(2500, baseTransactions);
 
     const nextState = accountReducer(initialState, {
-      type: AccountActionType.EDIT_STATEMENT_ENTRY,
-      entryId: '2',
-      nextAmount: 70,
-      nextType: StatementEntryType.TRANSFER,
-      nextMonth: 'Dezembro',
-      nextDate: '10/12/2022',
+      type: AccountActionType.EDIT_TRANSACTION,
+      transactionId: 2,
+      nextValue: 70,
+      nextType: TransactionType.TRANSFER,
+      nextDate: '2022-12-10T12:00:00.000Z',
     });
 
-    expect(nextState.currentBalance).toBe(2480);
-    const editedTransfer = nextState.currentStatementEntries.find((entry) => entry.id === '2');
-    expect(editedTransfer?.amount).toBe(-70);
-    expect(editedTransfer?.type).toBe(StatementEntryType.TRANSFER);
-    expect(editedTransfer?.month).toBe('Dezembro');
-    expect(editedTransfer?.date).toBe('10/12/2022');
+    expect(nextState.balance).toBe(2480);
+    const editedTransfer = nextState.transactions.find((transaction) => transaction.id === 2);
+    expect(editedTransfer?.value).toBe(70);
+    expect(editedTransfer?.type).toBe(TransactionType.TRANSFER);
+    expect(editedTransfer?.date).toBe('2022-12-10T12:00:00.000Z');
   });
 
-  it('edita deposito normalizando para valor positivo', () => {
-    const initialState = createAccountState(2500, baseEntries);
+  it('edita deposito normalizando para valor absoluto', () => {
+    const initialState = createAccountState(2500, baseTransactions);
 
     const nextState = accountReducer(initialState, {
-      type: AccountActionType.EDIT_STATEMENT_ENTRY,
-      entryId: '1',
-      nextAmount: -200,
-      nextType: StatementEntryType.DEPOSIT,
-      nextMonth: 'Janeiro',
-      nextDate: '02/01/2023',
+      type: AccountActionType.EDIT_TRANSACTION,
+      transactionId: 1,
+      nextValue: -200,
+      nextType: TransactionType.DEPOSIT,
+      nextDate: '2023-01-02T12:00:00.000Z',
     });
 
-    expect(nextState.currentBalance).toBe(2550);
-    const editedDeposit = nextState.currentStatementEntries.find((entry) => entry.id === '1');
-    expect(editedDeposit?.amount).toBe(200);
-    expect(editedDeposit?.type).toBe(StatementEntryType.DEPOSIT);
-    expect(editedDeposit?.month).toBe('Janeiro');
-    expect(editedDeposit?.date).toBe('02/01/2023');
+    expect(nextState.balance).toBe(2550);
+    const editedDeposit = nextState.transactions.find((transaction) => transaction.id === 1);
+    expect(editedDeposit?.value).toBe(200);
+    expect(editedDeposit?.type).toBe(TransactionType.DEPOSIT);
+    expect(editedDeposit?.date).toBe('2023-01-02T12:00:00.000Z');
   });
 
   it('mantem estado quando edit recebe id inexistente', () => {
-    const initialState = createAccountState(2500, baseEntries);
+    const initialState = createAccountState(2500, baseTransactions);
 
     const nextState = accountReducer(initialState, {
-      type: AccountActionType.EDIT_STATEMENT_ENTRY,
-      entryId: 'inexistente',
-      nextAmount: 1,
-      nextType: StatementEntryType.DEPOSIT,
-      nextMonth: 'Novembro',
-      nextDate: '18/11/2022',
+      type: AccountActionType.EDIT_TRANSACTION,
+      transactionId: 999,
+      nextValue: 1,
+      nextType: TransactionType.DEPOSIT,
+      nextDate: '2022-11-18T12:00:00.000Z',
     });
 
     expect(nextState).toBe(initialState);
   });
 
   it('retorna estado atual para acao desconhecida', () => {
-    const initialState = createAccountState(2500, baseEntries);
+    const initialState = createAccountState(2500, baseTransactions);
 
     const nextState = accountReducer(initialState, {
       type: 'acao-desconhecida',

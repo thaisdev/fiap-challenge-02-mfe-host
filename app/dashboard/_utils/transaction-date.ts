@@ -1,17 +1,10 @@
 export const TRANSACTION_DATE_TIME_ZONE = "America/Sao_Paulo";
 
 const isoDateRegex = /^(\d{4})-(\d{2})-(\d{2})$/;
-const ptBrDateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
 
 export type TransactionDateRange = {
   minDate: string;
   maxDate: string;
-};
-
-export type TransactionStatementDate = {
-  isoDate: string;
-  dateLabel: string;
-  monthLabel: string;
 };
 
 function parseIsoDate(value: string) {
@@ -33,23 +26,19 @@ function parseIsoDate(value: string) {
   return isValidDate ? { year, month, day } : null;
 }
 
-function parsePtBrDate(value: string) {
-  const matches = ptBrDateRegex.exec(value);
-  if (!matches) {
-    return null;
-  }
+function formatDateParts(date: Date, timeZone: string) {
+  const dateParts = new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone,
+  }).formatToParts(date);
 
-  const [, dayLabel, monthLabel, yearLabel] = matches;
-  const year = Number(yearLabel);
-  const month = Number(monthLabel);
-  const day = Number(dayLabel);
+  const year = dateParts.find((part) => part.type === "year")?.value ?? "1970";
+  const month = dateParts.find((part) => part.type === "month")?.value ?? "01";
+  const day = dateParts.find((part) => part.type === "day")?.value ?? "01";
 
-  const date = new Date(Date.UTC(year, month - 1, day, 12));
-  const isValidDate = date.getUTCFullYear() === year
-    && date.getUTCMonth() + 1 === month
-    && date.getUTCDate() === day;
-
-  return isValidDate ? { year, month, day } : null;
+  return `${year}-${month}-${day}`;
 }
 
 export function getCurrentYearInTimeZone(
@@ -92,32 +81,7 @@ export function getDefaultTransactionDate(
   referenceDate: Date = new Date(),
   timeZone: string = TRANSACTION_DATE_TIME_ZONE
 ) {
-  const dateParts = new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    timeZone,
-  }).formatToParts(referenceDate);
-
-  const year = dateParts.find((part) => part.type === "year")?.value ?? "1970";
-  const month = dateParts.find((part) => part.type === "month")?.value ?? "01";
-  const day = dateParts.find((part) => part.type === "day")?.value ?? "01";
-
-  return `${year}-${month}-${day}`;
-}
-
-export function getYearFromPtBrDate(value: string) {
-  const parsed = parsePtBrDate(value);
-  return parsed?.year ?? null;
-}
-
-export function getTimestampFromPtBrDate(value: string) {
-  const parsed = parsePtBrDate(value);
-  if (!parsed) {
-    return null;
-  }
-
-  return Date.UTC(parsed.year, parsed.month - 1, parsed.day, 12);
+  return formatDateParts(referenceDate, timeZone);
 }
 
 export function isTransactionDateWithinRange(value: string, range: TransactionDateRange) {
@@ -128,25 +92,63 @@ export function isTransactionDateWithinRange(value: string, range: TransactionDa
   return value >= range.minDate && value <= range.maxDate;
 }
 
-export function toStatementDate(
-  value: string,
-  range: TransactionDateRange,
-  timeZone: string = TRANSACTION_DATE_TIME_ZONE
-): TransactionStatementDate | null {
-  const parsed = parseIsoDate(value);
-  if (!parsed || !isTransactionDateWithinRange(value, range)) {
+export function toTransactionIsoDate(value: string, range: TransactionDateRange): string | null {
+  if (!isTransactionDateWithinRange(value, range)) {
     return null;
   }
 
-  const referenceDate = new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day, 12));
+  // Usa meio-dia UTC para evitar que a conversão para America/Sao_Paulo (UTC-3)
+  // recue a data exibida para o dia anterior.
+  return `${value}T12:00:00.000Z`;
+}
+
+export function dateOnlyFromTransactionDate(
+  value: string,
+  timeZone: string = TRANSACTION_DATE_TIME_ZONE
+): string | null {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return formatDateParts(date, timeZone);
+}
+
+export function getTimestampFromTransactionDate(value: string): number | null {
+  const timestamp = new Date(value).getTime();
+  return Number.isNaN(timestamp) ? null : timestamp;
+}
+
+export function formatTransactionDateLabel(
+  value: string,
+  timeZone: string = TRANSACTION_DATE_TIME_ZONE
+): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone,
+  }).format(date);
+}
+
+export function formatTransactionMonthLabel(
+  value: string,
+  timeZone: string = TRANSACTION_DATE_TIME_ZONE
+): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
   const monthLabel = new Intl.DateTimeFormat("pt-BR", {
     month: "long",
     timeZone,
-  }).format(referenceDate);
+  }).format(date);
 
-  return {
-    isoDate: value,
-    dateLabel: formatIsoDateToPtBr(value),
-    monthLabel: `${monthLabel.charAt(0).toUpperCase()}${monthLabel.slice(1)}`,
-  };
+  return `${monthLabel.charAt(0).toUpperCase()}${monthLabel.slice(1)}`;
 }

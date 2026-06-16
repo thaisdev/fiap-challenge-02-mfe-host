@@ -20,8 +20,11 @@ import type {
   NewTransactionPayload,
   NewTransactionResult,
 } from '../dashboard/_components/interfaces/new-transaction-panel.interfaces';
-import type { EditStatementEntryPayload } from '../dashboard/_components/interfaces/statement-panel.interfaces';
-import type { StatementEntry } from '../dashboard/_components/interfaces/statement-panel.interfaces';
+import type {
+  EditTransactionPayload,
+  Transaction,
+} from '../dashboard/_components/interfaces/statement-panel.interfaces';
+import { TransactionType } from '../dashboard/_components/interfaces/statement-panel.interfaces';
 import {
   AccountActionType,
   accountReducer,
@@ -30,25 +33,19 @@ import {
 import {
   formatIsoDateToPtBr,
   getTransactionDateRange,
-  toStatementDate,
-  type TransactionStatementDate,
+  toTransactionIsoDate,
 } from '../dashboard/_utils/transaction-date';
-import {
-  StatementEntryType,
-  TransactionType,
-  toStatementEntryType,
-} from '../dashboard/_components/interfaces/statement-panel.interfaces';
 
 export type AuthSessionStatus = 'loading' | 'authenticated' | 'unauthenticated';
 
 type AuthSessionContextValue = {
   session: AuthSession | null;
   status: AuthSessionStatus;
-  statementEntries: StatementEntry[];
+  transactions: Transaction[];
   balance: number;
   onSubmitTransaction: (payload: NewTransactionPayload) => NewTransactionResult;
-  onDeleteStatementEntry: (entryId: string) => void;
-  onEditStatementEntry: (payload: EditStatementEntryPayload) => NewTransactionResult;
+  onDeleteTransaction: (transactionId: number) => void;
+  onEditTransaction: (payload: EditTransactionPayload) => NewTransactionResult;
 };
 
 const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
@@ -56,21 +53,19 @@ const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
 const SERVER_SNAPSHOT = '__server_snapshot__';
 const EMPTY_SNAPSHOT = '__empty_snapshot__';
 
-function createStatementEntry(
-  { type, amount }: Omit<NewTransactionPayload, 'transactionDate'>,
-  statementDate: TransactionStatementDate
-): StatementEntry {
-  const id =
-    typeof crypto.randomUUID === 'function'
-      ? crypto.randomUUID()
-      : `entry-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+function createMockTransactionId() {
+  return Date.now() + Math.floor(Math.random() * 1000);
+}
 
+function createTransaction(
+  { type, value }: Omit<NewTransactionPayload, 'transactionDate'>,
+  isoDate: string
+): Transaction {
   return {
-    id,
-    month: statementDate.monthLabel,
-    type: toStatementEntryType(type),
-    amount: type === TransactionType.DEPOSIT ? amount : -amount,
-    date: statementDate.dateLabel,
+    id: createMockTransactionId(),
+    type,
+    value: Math.abs(value),
+    date: isoDate,
   };
 }
 
@@ -137,11 +132,11 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         ? 'authenticated'
         : 'unauthenticated';
 
-  const initialBalance = session?.user.accountBalance ?? 0;
-  const initialStatementEntries = session?.user.statementEntries ?? [];
+  const initialBalance = session?.user.account.balance ?? 0;
+  const initialTransactions = session?.user.account.transactions ?? [];
   const [accountState, dispatchAccountAction] = useReducer(
     accountReducer,
-    createAccountState(initialBalance, initialStatementEntries)
+    createAccountState(initialBalance, initialTransactions)
   );
   const transactionDateRange = getTransactionDateRange();
   const lastHydratedSnapshotRef = useRef<string | null>(null);
@@ -159,35 +154,35 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     lastHydratedSnapshotRef.current = serializedSession;
     dispatchAccountAction({
       type: AccountActionType.HYDRATE_FROM_PROPS,
-      balance: session.user.accountBalance,
-      statementEntries: session.user.statementEntries ?? [],
+      balance: session.user.account.balance,
+      transactions: session.user.account.transactions ?? [],
     });
   }, [serializedSession, session]);
 
   const onSubmitTransaction = ({
     type,
-    amount,
+    value,
     transactionDate,
   }: NewTransactionPayload): NewTransactionResult => {
-    if (type === TransactionType.TRANSFER && amount > accountState.currentBalance) {
+    if (type === TransactionType.TRANSFER && value > accountState.balance) {
       return {
         ok: false,
         message: 'Saldo insuficiente para concluir a transferência.',
       };
     }
 
-    const statementDate = toStatementDate(transactionDate, transactionDateRange);
-    if (!statementDate) {
+    const isoDate = toTransactionIsoDate(transactionDate, transactionDateRange);
+    if (!isoDate) {
       return {
         ok: false,
         message: `Data inválida. Selecione uma data entre ${formatIsoDateToPtBr(transactionDateRange.minDate)} e ${formatIsoDateToPtBr(transactionDateRange.maxDate)}.`,
       };
     }
 
-    const entry = createStatementEntry({ type, amount }, statementDate);
+    const transaction = createTransaction({ type, value }, isoDate);
     dispatchAccountAction({
-      type: AccountActionType.APPEND_TRANSACTION_ENTRY,
-      entry,
+      type: AccountActionType.APPEND_TRANSACTION,
+      transaction,
     });
 
     return {
@@ -195,37 +190,43 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     };
   };
 
-  const onDeleteStatementEntry = (entryId: string) => {
+  const onDeleteTransaction = (transactionId: number) => {
     dispatchAccountAction({
-      type: AccountActionType.DELETE_STATEMENT_ENTRY,
-      entryId,
+      type: AccountActionType.DELETE_TRANSACTION,
+      transactionId,
     });
   };
 
-  const onEditStatementEntry = ({
-    entryId,
+  const onEditTransaction = ({
+    transactionId,
     type,
-    amount,
+    value,
     transactionDate,
-  }: EditStatementEntryPayload): NewTransactionResult => {
-    const entryToEdit = accountState.currentStatementEntries.find((entry) => entry.id === entryId);
-    if (!entryToEdit) {
+  }: EditTransactionPayload): NewTransactionResult => {
+    const transactionToEdit = accountState.transactions.find(
+      (transaction) => transaction.id === transactionId
+    );
+    if (!transactionToEdit) {
       return {
         ok: false,
         message: 'Lançamento não encontrado para edição.',
       };
     }
 
-    const statementDate = toStatementDate(transactionDate, transactionDateRange);
-    if (!statementDate) {
+    const isoDate = toTransactionIsoDate(transactionDate, transactionDateRange);
+    if (!isoDate) {
       return {
         ok: false,
         message: `Data inválida. Selecione uma data entre ${formatIsoDateToPtBr(transactionDateRange.minDate)} e ${formatIsoDateToPtBr(transactionDateRange.maxDate)}.`,
       };
     }
 
-    const nextSignedAmount = type === TransactionType.DEPOSIT ? amount : -amount;
-    const projectedBalance = accountState.currentBalance - entryToEdit.amount + nextSignedAmount;
+    const currentSignedValue =
+      transactionToEdit.type === TransactionType.TRANSFER
+        ? -transactionToEdit.value
+        : transactionToEdit.value;
+    const nextSignedValue = type === TransactionType.TRANSFER ? -value : value;
+    const projectedBalance = accountState.balance - currentSignedValue + nextSignedValue;
 
     if (projectedBalance < 0) {
       return {
@@ -235,13 +236,11 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
     }
 
     dispatchAccountAction({
-      type: AccountActionType.EDIT_STATEMENT_ENTRY,
-      entryId,
-      nextAmount: amount,
-      nextType:
-        type === TransactionType.DEPOSIT ? StatementEntryType.DEPOSIT : StatementEntryType.TRANSFER,
-      nextMonth: statementDate.monthLabel,
-      nextDate: statementDate.dateLabel,
+      type: AccountActionType.EDIT_TRANSACTION,
+      transactionId,
+      nextValue: value,
+      nextType: type,
+      nextDate: isoDate,
     });
 
     return {
@@ -255,10 +254,10 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
         session,
         status,
         onSubmitTransaction,
-        onDeleteStatementEntry,
-        onEditStatementEntry,
-        statementEntries: accountState.currentStatementEntries,
-        balance: accountState.currentBalance,
+        onDeleteTransaction,
+        onEditTransaction,
+        transactions: accountState.transactions,
+        balance: accountState.balance,
       }}
     >
       {children}

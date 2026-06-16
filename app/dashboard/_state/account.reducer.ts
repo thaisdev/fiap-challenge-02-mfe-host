@@ -1,42 +1,45 @@
 import {
-  StatementEntryType,
-  type StatementEntry,
+  TransactionType,
+  type Transaction,
 } from '../_components/interfaces/statement-panel.interfaces';
 
 export enum AccountActionType {
   HYDRATE_FROM_PROPS = 'hydrate-from-props',
-  APPEND_TRANSACTION_ENTRY = 'append-transaction-entry',
-  DELETE_STATEMENT_ENTRY = 'delete-statement-entry',
-  EDIT_STATEMENT_ENTRY = 'edit-statement-entry',
+  APPEND_TRANSACTION = 'append-transaction',
+  DELETE_TRANSACTION = 'delete-transaction',
+  EDIT_TRANSACTION = 'edit-transaction',
 }
 
 export type AccountState = {
-  currentBalance: number;
-  currentStatementEntries: StatementEntry[];
+  balance: number;
+  transactions: Transaction[];
 };
 
 export type AccountAction =
   | {
       type: AccountActionType.HYDRATE_FROM_PROPS;
       balance: number;
-      statementEntries: readonly StatementEntry[];
+      transactions: readonly Transaction[];
     }
   | {
-      type: AccountActionType.APPEND_TRANSACTION_ENTRY;
-      entry: StatementEntry;
+      type: AccountActionType.APPEND_TRANSACTION;
+      transaction: Transaction;
     }
   | {
-      type: AccountActionType.DELETE_STATEMENT_ENTRY;
-      entryId: string;
+      type: AccountActionType.DELETE_TRANSACTION;
+      transactionId: number;
     }
   | {
-      type: AccountActionType.EDIT_STATEMENT_ENTRY;
-      entryId: string;
-      nextAmount: number;
-      nextType: StatementEntryType;
-      nextMonth: string;
+      type: AccountActionType.EDIT_TRANSACTION;
+      transactionId: number;
+      nextValue: number;
+      nextType: TransactionType;
       nextDate: string;
     };
+
+function signedValue(type: TransactionType, value: number): number {
+  return type === TransactionType.TRANSFER ? -Math.abs(value) : Math.abs(value);
+}
 
 function roundToCentsPrecision(value: number): number {
   return Math.round(value * 100) / 100;
@@ -44,68 +47,70 @@ function roundToCentsPrecision(value: number): number {
 
 export function createAccountState(
   balance: number,
-  statementEntries: readonly StatementEntry[]
+  transactions: readonly Transaction[]
 ): AccountState {
   return {
-    currentBalance: balance,
-    currentStatementEntries: [...statementEntries],
+    balance,
+    transactions: [...transactions],
   };
 }
 
 export function accountReducer(state: AccountState, action: AccountAction): AccountState {
   switch (action.type) {
     case AccountActionType.HYDRATE_FROM_PROPS:
-      return createAccountState(action.balance, action.statementEntries);
+      return createAccountState(action.balance, action.transactions);
 
-    case AccountActionType.APPEND_TRANSACTION_ENTRY:
+    case AccountActionType.APPEND_TRANSACTION:
       return {
-        currentBalance: roundToCentsPrecision(state.currentBalance + action.entry.amount),
-        currentStatementEntries: [action.entry, ...state.currentStatementEntries],
+        balance: roundToCentsPrecision(
+          state.balance + signedValue(action.transaction.type, action.transaction.value)
+        ),
+        transactions: [action.transaction, ...state.transactions],
       };
 
-    case AccountActionType.DELETE_STATEMENT_ENTRY: {
-      const entryToDelete = state.currentStatementEntries.find(
-        (entry) => entry.id === action.entryId
+    case AccountActionType.DELETE_TRANSACTION: {
+      const transactionToDelete = state.transactions.find(
+        (transaction) => transaction.id === action.transactionId
       );
-      if (!entryToDelete) {
+      if (!transactionToDelete) {
         return state;
       }
 
       return {
-        currentBalance: roundToCentsPrecision(state.currentBalance - entryToDelete.amount),
-        currentStatementEntries: state.currentStatementEntries.filter(
-          (entry) => entry.id !== action.entryId
+        balance: roundToCentsPrecision(
+          state.balance - signedValue(transactionToDelete.type, transactionToDelete.value)
+        ),
+        transactions: state.transactions.filter(
+          (transaction) => transaction.id !== action.transactionId
         ),
       };
     }
 
-    case AccountActionType.EDIT_STATEMENT_ENTRY: {
-      const entryToEdit = state.currentStatementEntries.find(
-        (entry) => entry.id === action.entryId
+    case AccountActionType.EDIT_TRANSACTION: {
+      const transactionToEdit = state.transactions.find(
+        (transaction) => transaction.id === action.transactionId
       );
-      if (!entryToEdit) {
+      if (!transactionToEdit) {
         return state;
       }
 
-      const normalizedAmount =
-        action.nextType === StatementEntryType.TRANSFER
-          ? -Math.abs(action.nextAmount)
-          : Math.abs(action.nextAmount);
+      const nextValue = Math.abs(action.nextValue);
 
       return {
-        currentBalance: roundToCentsPrecision(
-          state.currentBalance - entryToEdit.amount + normalizedAmount
+        balance: roundToCentsPrecision(
+          state.balance -
+            signedValue(transactionToEdit.type, transactionToEdit.value) +
+            signedValue(action.nextType, nextValue)
         ),
-        currentStatementEntries: state.currentStatementEntries.map((entry) =>
-          entry.id === action.entryId
+        transactions: state.transactions.map((transaction) =>
+          transaction.id === action.transactionId
             ? {
-                ...entry,
+                ...transaction,
                 type: action.nextType,
-                amount: normalizedAmount,
-                month: action.nextMonth,
+                value: nextValue,
                 date: action.nextDate,
               }
-            : entry
+            : transaction
         ),
       };
     }

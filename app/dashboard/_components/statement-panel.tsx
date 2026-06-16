@@ -1,14 +1,18 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { EditStatementEntryModal } from './edit-statement-entry-modal';
 import {
-  formatStatementEntryTypeLabel,
-  StatementEntry,
+  formatTransactionTypeLabel,
+  Transaction,
 } from './interfaces/statement-panel.interfaces';
 import { formatCurrency } from '@/app/lib/calc';
+import {
+  formatTransactionDateLabel,
+  formatTransactionMonthLabel,
+} from '../_utils/transaction-date';
 import { useAuthSessionContext } from '@/app/context/auth-session-context';
 
 type StatementPanelProps = {
@@ -16,7 +20,7 @@ type StatementPanelProps = {
   ariaLabel?: string;
   editableYear?: number | null;
   showActions?: boolean;
-  entries?: StatementEntry[];
+  entries?: Transaction[];
 };
 
 export function StatementPanel({
@@ -25,19 +29,18 @@ export function StatementPanel({
   showActions = true,
   entries = [],
 }: StatementPanelProps) {
-  const { statementEntries, onDeleteStatementEntry, onEditStatementEntry } =
-    useAuthSessionContext()!;
+  const { transactions, onDeleteTransaction, onEditTransaction } = useAuthSessionContext()!;
 
-  const visibleStatementEntries = entries.length > 0 ? entries : statementEntries;
+  const visibleTransactions = entries.length > 0 ? entries : transactions;
 
   const panelRef = useRef<HTMLElement | null>(null);
-  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
-  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null);
+  const [editingTransactionId, setEditingTransactionId] = useState<number | null>(null);
 
-  const selectedEntry =
-    visibleStatementEntries.find((entry) => entry.id === selectedEntryId) ?? null;
-  const activeSelectedEntryId = selectedEntry?.id ?? null;
-  const areEntryActionsEnabled = activeSelectedEntryId !== null;
+  const selectedTransaction =
+    visibleTransactions.find((transaction) => transaction.id === selectedTransactionId) ?? null;
+  const activeSelectedTransactionId = selectedTransaction?.id ?? null;
+  const areTransactionActionsEnabled = activeSelectedTransactionId !== null;
 
   useEffect(() => {
     const handleOutsidePointerDown = (event: MouseEvent | TouchEvent) => {
@@ -50,7 +53,7 @@ export function StatementPanel({
         return;
       }
 
-      setSelectedEntryId(null);
+      setSelectedTransactionId(null);
     };
 
     document.addEventListener('mousedown', handleOutsidePointerDown);
@@ -62,24 +65,25 @@ export function StatementPanel({
     };
   }, []);
 
-  const handleDeleteSelectedEntry = () => {
-    if (!activeSelectedEntryId) {
+  const handleDeleteSelectedTransaction = () => {
+    if (!activeSelectedTransactionId) {
       return;
     }
 
-    onDeleteStatementEntry(activeSelectedEntryId);
-    setEditingEntryId(null);
+    onDeleteTransaction(activeSelectedTransactionId);
+    setEditingTransactionId(null);
   };
 
-  const handleEditSelectedEntry = () => {
-    if (!activeSelectedEntryId) {
+  const handleEditSelectedTransaction = () => {
+    if (!activeSelectedTransactionId) {
       return;
     }
 
-    setEditingEntryId(activeSelectedEntryId);
+    setEditingTransactionId(activeSelectedTransactionId);
   };
 
-  const editingEntry = visibleStatementEntries.find((entry) => entry.id === editingEntryId) ?? null;
+  const editingTransaction =
+    visibleTransactions.find((transaction) => transaction.id === editingTransactionId) ?? null;
 
   return (
     <>
@@ -93,8 +97,8 @@ export function StatementPanel({
                 variant="solid"
                 tone="primary"
                 className="h-12 w-12 !rounded-full p-0"
-                disabled={!areEntryActionsEnabled}
-                onClick={handleEditSelectedEntry}
+                disabled={!areTransactionActionsEnabled}
+                onClick={handleEditSelectedTransaction}
               >
                 <Image
                   src="/icons/pencil-edit.svg"
@@ -109,8 +113,8 @@ export function StatementPanel({
                 variant="solid"
                 tone="primary"
                 className="h-12 w-12 !rounded-full p-0"
-                disabled={!areEntryActionsEnabled}
-                onClick={handleDeleteSelectedEntry}
+                disabled={!areTransactionActionsEnabled}
+                onClick={handleDeleteSelectedTransaction}
               >
                 <Image
                   src="/icons/trash-exclude.svg"
@@ -125,35 +129,39 @@ export function StatementPanel({
         </div>
 
         <ul className="mt-3 space-y-3">
-          {visibleStatementEntries.map((entry) => (
+          {visibleTransactions.map((transaction) => (
             <li
-              key={entry.id}
-              onClick={() => setSelectedEntryId(entry.id)}
+              key={transaction.id}
+              onClick={() => setSelectedTransactionId(transaction.id)}
               className={[
                 'cursor-pointer border-b border-secondary/35 pb-2 transition-colors',
-                activeSelectedEntryId === entry.id ? 'bg-surface-soft' : '',
+                activeSelectedTransactionId === transaction.id ? 'bg-surface-soft' : '',
               ].join(' ')}
             >
               <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="text-body-sm font-semibold text-secondary">{entry.month}</span>
-                <span className="text-body-sm text-subtle">{entry.date}</span>
+                <span className="text-body-sm font-semibold text-secondary">
+                  {formatTransactionMonthLabel(transaction.date)}
+                </span>
+                <span className="text-body-sm text-subtle">
+                  {formatTransactionDateLabel(transaction.date)}
+                </span>
               </div>
               <p className="text-body-md text-heading">
-                {formatStatementEntryTypeLabel(entry.type)}
+                {formatTransactionTypeLabel(transaction.type)}
               </p>
               <p className="text-title-lg font-semibold text-black">
-                {formatCurrency(entry.amount)}
+                {formatCurrency(transaction.value)}
               </p>
             </li>
           ))}
         </ul>
       </aside>
 
-      {editingEntry ? (
+      {editingTransaction ? (
         <EditStatementEntryModal
-          entry={editingEntry}
-          onClose={() => setEditingEntryId(null)}
-          onSubmit={onEditStatementEntry}
+          entry={editingTransaction}
+          onClose={() => setEditingTransactionId(null)}
+          onSubmit={onEditTransaction}
         />
       ) : null}
     </>

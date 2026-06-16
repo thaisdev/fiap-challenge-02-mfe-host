@@ -12,10 +12,7 @@ import {
   AUTH_SESSION_STORAGE_KEY,
   type AuthSession,
 } from '../lib/auth-session';
-import {
-  StatementEntryType,
-  TransactionType,
-} from '../dashboard/_components/interfaces/statement-panel.interfaces';
+import { TransactionType } from '../dashboard/_components/interfaces/statement-panel.interfaces';
 import { getTransactionDateRange } from '../dashboard/_utils/transaction-date';
 
 type CapturedContext = ReturnType<typeof useAuthSessionContext>;
@@ -23,27 +20,26 @@ type CapturedContext = ReturnType<typeof useAuthSessionContext>;
 const baseSession: AuthSession = {
   token: 'token-123',
   user: {
-    id: 'user-1',
+    id: 969,
     name: 'Joana Silva',
     email: 'joana@mcintoshbank.com.br',
-    createdAt: '2026-04-01T12:00:00.000Z',
-    accountBalance: 250,
-    statementEntries: [
-      {
-        id: 'entry-1',
-        month: 'Abril',
-        type: StatementEntryType.DEPOSIT,
-        amount: 120,
-        date: '10/04/2026',
-      },
-      {
-        id: 'entry-2',
-        month: 'Abril',
-        type: StatementEntryType.TRANSFER,
-        amount: -50,
-        date: '11/04/2026',
-      },
-    ],
+    account: {
+      balance: 250,
+      transactions: [
+        {
+          id: 1,
+          type: TransactionType.DEPOSIT,
+          date: '2026-04-10T12:00:00.000Z',
+          value: 120,
+        },
+        {
+          id: 2,
+          type: TransactionType.TRANSFER,
+          date: '2026-04-11T12:00:00.000Z',
+          value: 50,
+        },
+      ],
+    },
   },
 };
 
@@ -59,7 +55,7 @@ function Consumer({ onValue }: { onValue: (value: CapturedContext) => void }) {
     <div>
       <span data-testid="status">{context.status}</span>
       <span data-testid="balance">{context.balance}</span>
-      <span data-testid="entries">{context.statementEntries.length}</span>
+      <span data-testid="entries">{context.transactions.length}</span>
     </div>
   );
 }
@@ -92,7 +88,8 @@ function RerenderingProvider({ onValue }: { onValue: (value: CapturedContext) =>
 describe('AuthSessionProvider', () => {
   beforeEach(() => {
     window.sessionStorage.clear();
-    vi.spyOn(crypto, 'randomUUID').mockReturnValue('entry-random-id');
+    vi.spyOn(Date, 'now').mockReturnValue(123456);
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
   });
 
   afterEach(() => {
@@ -128,13 +125,13 @@ describe('AuthSessionProvider', () => {
     expect(context.status satisfies AuthSessionStatus).toBe('authenticated');
     expect(context.session?.user.name).toBe('Joana Silva');
     expect(context.balance).toBe(250);
-    expect(context.statementEntries.length).toBeGreaterThanOrEqual(2);
+    expect(context.transactions.length).toBeGreaterThanOrEqual(2);
 
     act(() => {
       expect(
         context.onSubmitTransaction({
           type: TransactionType.DEPOSIT,
-          amount: 30,
+          value: 30,
           transactionDate: validDate,
         })
       ).toEqual({ ok: true });
@@ -142,68 +139,67 @@ describe('AuthSessionProvider', () => {
 
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     expect(context.balance).toBe(280);
-    expect(context.statementEntries[0]).toMatchObject({
-      id: 'entry-random-id',
-      type: StatementEntryType.DEPOSIT,
-      amount: 30,
+    expect(context.transactions[0]).toMatchObject({
+      type: TransactionType.DEPOSIT,
+      value: 30,
     });
 
     act(() => {
       expect(
         context.onSubmitTransaction({
           type: TransactionType.TRANSFER,
-          amount: 10,
+          value: 10,
           transactionDate: validDate,
         })
       ).toEqual({ ok: true });
     });
 
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
-    expect(context.statementEntries[0]).toMatchObject({
-      type: StatementEntryType.TRANSFER,
-      amount: -10,
+    expect(context.transactions[0]).toMatchObject({
+      type: TransactionType.TRANSFER,
+      value: 10,
     });
 
     act(() => {
-      context.onDeleteStatementEntry('entry-2');
+      context.onDeleteTransaction(2);
     });
 
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
     expect(context.balance).toBe(320);
-    expect(context.statementEntries.some((entry) => entry.id === 'entry-2')).toBe(false);
+    expect(context.transactions.some((transaction) => transaction.id === 2)).toBe(false);
 
     act(() => {
       expect(
-        context.onEditStatementEntry({
-          entryId: 'entry-1',
+        context.onEditTransaction({
+          transactionId: 1,
           type: TransactionType.TRANSFER,
-          amount: 40,
+          value: 40,
           transactionDate: validDate,
         })
       ).toEqual({ ok: true });
     });
 
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
-    expect(context.statementEntries.find((entry) => entry.id === 'entry-1')).toMatchObject({
-      type: StatementEntryType.TRANSFER,
-      amount: -40,
+    expect(context.transactions.find((transaction) => transaction.id === 1)).toMatchObject({
+      type: TransactionType.TRANSFER,
+      value: 40,
     });
 
     act(() => {
       expect(
-        context.onEditStatementEntry({
-          entryId: 'entry-1',
+        context.onEditTransaction({
+          transactionId: 1,
           type: TransactionType.DEPOSIT,
-          amount: 40,
+          value: 40,
           transactionDate: validDate,
         })
       ).toEqual({ ok: true });
     });
 
     context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
-    expect(context.statementEntries.find((entry) => entry.id === 'entry-1')).toMatchObject({
-      type: StatementEntryType.DEPOSIT,
-      amount: 40,
+    expect(context.transactions.find((transaction) => transaction.id === 1)).toMatchObject({
+      type: TransactionType.DEPOSIT,
+      value: 40,
     });
   });
 
@@ -212,7 +208,10 @@ describe('AuthSessionProvider', () => {
       ...baseSession,
       user: {
         ...baseSession.user,
-        statementEntries: undefined,
+        account: {
+          ...baseSession.user.account,
+          transactions: undefined,
+        },
       },
     };
     storeSession(sessionWithoutEntries);
@@ -223,14 +222,8 @@ describe('AuthSessionProvider', () => {
     expect(screen.getByTestId('entries')).toHaveTextContent('8');
   });
 
-  it('cria lancamento com fallback quando randomUUID nao esta disponivel', () => {
+  it('cria lancamento com id gerado a partir do horario atual', () => {
     storeSession(baseSession);
-    vi.spyOn(Date, 'now').mockReturnValue(123456);
-    vi.spyOn(Math, 'random').mockReturnValue(0.5);
-    Object.defineProperty(crypto, 'randomUUID', {
-      value: undefined,
-      configurable: true,
-    });
 
     const onValue = renderProvider();
     const context = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
@@ -239,14 +232,14 @@ describe('AuthSessionProvider', () => {
       expect(
         context.onSubmitTransaction({
           type: TransactionType.DEPOSIT,
-          amount: 10,
+          value: 10,
           transactionDate: getTransactionDateRange().minDate,
         })
       ).toEqual({ ok: true });
     });
 
     const updatedContext = onValue.mock.calls.at(-1)?.[0] as CapturedContext;
-    expect(updatedContext.statementEntries[0].id).toContain('entry-123456-');
+    expect(updatedContext.transactions[0].id).toBe(123456 + 500);
   });
 
   it('retorna mensagens de erro para mutacoes invalidas', () => {
@@ -258,7 +251,7 @@ describe('AuthSessionProvider', () => {
     expect(
       context.onSubmitTransaction({
         type: TransactionType.TRANSFER,
-        amount: 9999.99,
+        value: 9999.99,
         transactionDate: validDate,
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('Saldo insuficiente') });
@@ -266,34 +259,34 @@ describe('AuthSessionProvider', () => {
     expect(
       context.onSubmitTransaction({
         type: TransactionType.DEPOSIT,
-        amount: 1,
+        value: 1,
         transactionDate: '1900-01-01',
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('Data') });
 
     expect(
-      context.onEditStatementEntry({
-        entryId: 'inexistente',
+      context.onEditTransaction({
+        transactionId: 999,
         type: TransactionType.DEPOSIT,
-        amount: 1,
+        value: 1,
         transactionDate: validDate,
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('não encontrado') });
 
     expect(
-      context.onEditStatementEntry({
-        entryId: 'entry-1',
+      context.onEditTransaction({
+        transactionId: 1,
         type: TransactionType.DEPOSIT,
-        amount: 1,
+        value: 1,
         transactionDate: '1900-01-01',
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('Data') });
 
     expect(
-      context.onEditStatementEntry({
-        entryId: 'entry-1',
+      context.onEditTransaction({
+        transactionId: 1,
         type: TransactionType.TRANSFER,
-        amount: 9999.99,
+        value: 9999.99,
         transactionDate: validDate,
       })
     ).toMatchObject({ ok: false, message: expect.stringContaining('Saldo insuficiente') });
@@ -363,16 +356,17 @@ describe('AuthSessionProvider', () => {
     expect(screen.getByTestId('status')).toHaveTextContent('authenticated');
   });
 
-  it('normaliza sessao persistida quando snapshot esta em formato legado', () => {
+  it('normaliza sessao persistida quando extrato esta incompleto', () => {
     storeSession({
       token: 'token-legado',
       user: {
-        id: 'user-2',
+        id: 970,
         name: 'Maria Lima',
         email: 'maria@mcintoshbank.com.br',
-        createdAt: '2026-04-01T12:00:00.000Z',
-        accountBalance: 'R$ 1.234,56',
-        statementEntries: [],
+        account: {
+          balance: 1234.56,
+          transactions: [],
+        },
       },
     });
 
@@ -381,8 +375,8 @@ describe('AuthSessionProvider', () => {
     const stored = JSON.parse(
       window.sessionStorage.getItem(AUTH_SESSION_STORAGE_KEY) ?? '{}'
     ) as AuthSession;
-    expect(stored.user.accountBalance).toBe(1234.56);
-    expect(stored.user.statementEntries.length).toBeGreaterThan(0);
+    expect(stored.user.account.balance).toBe(1234.56);
+    expect(stored.user.account.transactions.length).toBeGreaterThan(0);
   });
 });
 

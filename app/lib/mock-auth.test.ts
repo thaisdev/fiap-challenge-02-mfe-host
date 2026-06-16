@@ -19,7 +19,8 @@ describe("mock-auth", () => {
       expect(result.user.name).toBe("Maria da Silva");
       expect(result.user.email).toBe("maria@mail.com");
       expect(result.user.id).toBeTruthy();
-      expect(result.user.createdAt).toBeTruthy();
+      expect(result.user.account.balance).toBe(2500);
+      expect(result.user.account.transactions.length).toBeGreaterThanOrEqual(8);
     }
   });
 
@@ -84,13 +85,14 @@ describe("mock-auth", () => {
 
     globalWithMockUsers.__mockUsers = [
       {
-        id: "user-legado",
+        id: 969,
         name: "Usuario Legado",
         email: "legado@mail.com",
         password: "senha-segura",
-        createdAt: "2026-04-01T12:00:00.000Z",
-        accountBalance: 2500,
-        statementEntries: [],
+        account: {
+          balance: 2500,
+          transactions: [],
+        },
       },
     ];
 
@@ -102,7 +104,7 @@ describe("mock-auth", () => {
     expect(login.ok).toBe(true);
 
     if (login.ok) {
-      expect(login.user.statementEntries.length).toBeGreaterThanOrEqual(8);
+      expect(login.user.account.transactions.length).toBeGreaterThanOrEqual(8);
     }
   });
 

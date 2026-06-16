@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { AuthSessionProvider, useAuthSessionContext } from '@/app/context/auth-session-context';
 import { AccountSummaryCard } from './_components/account-summary-card';
 import { DashboardHeader } from './_components/dashboard-header';
-import { getTimestampFromPtBrDate } from './_utils/transaction-date';
+import { getTimestampFromTransactionDate } from './_utils/transaction-date';
 import {
   DashboardSidebarItem,
   DashboardSidebarNav,
@@ -48,15 +48,15 @@ function formatCurrentDateLabel() {
 }
 
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
-  const { session, balance, statementEntries } = useAuthSessionContext();
+  const { session, balance, transactions } = useAuthSessionContext();
   const [activeTab, setActiveTab] = useState<DashboardTabKey>('home');
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const currentDateLabel = useMemo(() => formatCurrentDateLabel(), []);
 
-  const orderedStatementEntries = useMemo(() => {
-    return [...statementEntries].sort((entryA, entryB) => {
-      const timestampA = getTimestampFromPtBrDate(entryA.date);
-      const timestampB = getTimestampFromPtBrDate(entryB.date);
+  const orderedTransactions = useMemo(() => {
+    return [...transactions].sort((transactionA, transactionB) => {
+      const timestampA = getTimestampFromTransactionDate(transactionA.date);
+      const timestampB = getTimestampFromTransactionDate(transactionB.date);
 
       if (timestampA === null && timestampB === null) {
         return 0;
@@ -72,11 +72,11 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
       return timestampB - timestampA;
     });
-  }, [statementEntries]);
+  }, [transactions]);
 
-  const visibleStatementEntries = useMemo(() => {
-    return orderedStatementEntries.slice(0, 6);
-  }, [orderedStatementEntries]);
+  const visibleTransactions = useMemo(() => {
+    return orderedTransactions.slice(0, 6);
+  }, [orderedTransactions]);
 
   if (!session) {
     return null;
@@ -113,7 +113,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
             </div>
 
             <div className="desktop:col-start-3 desktop:flex desktop:h-full">
-              <StatementPanel title="Extrato" entries={visibleStatementEntries} />
+              <StatementPanel title="Extrato" entries={visibleTransactions} />
             </div>
           </div>
         </div>

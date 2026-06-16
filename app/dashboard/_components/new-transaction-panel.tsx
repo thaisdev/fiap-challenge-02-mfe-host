@@ -16,15 +16,15 @@ import {
 import { formatCurrencyInput } from '../_utils/currency-mask';
 import { useAuthSessionContext } from '@/app/context/auth-session-context';
 
-function parseCurrencyInputToAmount(value: string) {
-  const normalizedAmount = value.replace(/\./g, '').replace(',', '.');
-  const amountValue = Number(normalizedAmount);
+function parseCurrencyInputToValue(value: string) {
+  const normalizedValue = value.replace(/\./g, '').replace(',', '.');
+  const numericValue = Number(normalizedValue);
 
-  if (!Number.isFinite(amountValue) || amountValue <= 0) {
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
     return 0;
   }
 
-  return Math.round(amountValue * 100) / 100;
+  return Math.round(numericValue * 100) / 100;
 }
 
 export function NewTransactionPanel() {
@@ -40,11 +40,11 @@ export function NewTransactionPanel() {
     { value: TransactionType.TRANSFER, label: 'Transferência' },
   ];
 
-  const amount = useMemo(
-    () => parseCurrencyInputToAmount(transactionAmount),
+  const value = useMemo(
+    () => parseCurrencyInputToValue(transactionAmount),
     [transactionAmount]
   );
-  const isAmountValid = amount > 0;
+  const isAmountValid = value > 0;
 
   const isDateValid = isTransactionDateWithinRange(transactionDate, calendarRange);
   const isFormValid = transactionType !== '' && isAmountValid && isDateValid;
@@ -70,7 +70,7 @@ export function NewTransactionPanel() {
 
     const result = onSubmitTransaction({
       type: transactionType,
-      amount,
+      value,
       transactionDate,
     });
 

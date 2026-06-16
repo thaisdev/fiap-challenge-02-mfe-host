@@ -2,16 +2,16 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StatementPanel } from './statement-panel';
-import { StatementEntryType } from './interfaces/statement-panel.interfaces';
+import { TransactionType } from './interfaces/statement-panel.interfaces';
 
-const onDeleteStatementEntryMock = vi.fn();
-const onEditStatementEntryMock = vi.fn();
+const onDeleteTransactionMock = vi.fn();
+const onEditTransactionMock = vi.fn();
 
 vi.mock('@/app/context/auth-session-context', () => ({
   useAuthSessionContext: () => ({
-    statementEntries: [],
-    onDeleteStatementEntry: onDeleteStatementEntryMock,
-    onEditStatementEntry: onEditStatementEntryMock,
+    transactions: [],
+    onDeleteTransaction: onDeleteTransactionMock,
+    onEditTransaction: onEditTransactionMock,
   }),
 }));
 
@@ -33,8 +33,8 @@ vi.mock('@/components/ui/button', () => ({
 
 describe('StatementPanel guards', () => {
   beforeEach(() => {
-    onDeleteStatementEntryMock.mockReset();
-    onEditStatementEntryMock.mockReset();
+    onDeleteTransactionMock.mockReset();
+    onEditTransactionMock.mockReset();
   });
 
   it('ignora acoes de editar e excluir quando nao existe lancamento selecionado', () => {
@@ -42,11 +42,10 @@ describe('StatementPanel guards', () => {
       <StatementPanel
         entries={[
           {
-            id: '1',
-            month: 'Novembro',
-            type: StatementEntryType.DEPOSIT,
-            amount: 150,
-            date: '18/11/2022',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2022-11-18T12:00:00.000Z',
+            value: 150,
           },
         ]}
       />
@@ -55,8 +54,8 @@ describe('StatementPanel guards', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Editar extrato' }));
     fireEvent.click(screen.getByRole('button', { name: 'Excluir extrato' }));
 
-    expect(onEditStatementEntryMock).not.toHaveBeenCalled();
-    expect(onDeleteStatementEntryMock).not.toHaveBeenCalled();
+    expect(onEditTransactionMock).not.toHaveBeenCalled();
+    expect(onDeleteTransactionMock).not.toHaveBeenCalled();
     expect(screen.queryByRole('heading', { name: /Editar trans/i })).not.toBeInTheDocument();
   });
 });

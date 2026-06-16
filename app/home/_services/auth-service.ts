@@ -1,4 +1,4 @@
-import { StatementEntryType } from '@/app/dashboard/_components/interfaces/statement-panel.interfaces';
+import { TransactionType } from '@/app/dashboard/_components/interfaces/transaction.interfaces';
 
 type ServiceMessageResponse = {
   message?: unknown;
@@ -11,21 +11,23 @@ type ServiceResult = {
   message: string;
 };
 
-export type AuthStatementEntry = {
-  id: string;
-  month: string;
-  type: StatementEntryType;
-  amount: number;
+export type AuthTransaction = {
+  id: number;
+  type: TransactionType;
   date: string;
+  value: number;
+};
+
+export type AuthAccount = {
+  balance: number;
+  transactions: AuthTransaction[];
 };
 
 export type AuthenticatedMockUser = {
-  id: string;
+  id: number;
   name: string;
   email: string;
-  createdAt: string;
-  accountBalance: number;
-  statementEntries: AuthStatementEntry[];
+  account: AuthAccount;
 };
 
 export type LoginMockAccountResult =
@@ -128,19 +130,18 @@ async function fetchAuthenticatedMockUserByEmail(email: string) {
   }
 }
 
-function isStatementEntry(value: unknown): value is AuthStatementEntry {
+function isAuthTransaction(value: unknown): value is AuthTransaction {
   if (!value || typeof value !== 'object') {
     return false;
   }
 
-  const entry = value as Record<string, unknown>;
+  const transaction = value as Record<string, unknown>;
 
   return (
-    typeof entry.id === 'string' &&
-    typeof entry.month === 'string' &&
-    typeof entry.type === 'string' &&
-    typeof entry.amount === 'number' &&
-    typeof entry.date === 'string'
+    typeof transaction.id === 'number' &&
+    (transaction.type === TransactionType.DEPOSIT || transaction.type === TransactionType.TRANSFER) &&
+    typeof transaction.date === 'string' &&
+    typeof transaction.value === 'number'
   );
 }
 
@@ -150,15 +151,17 @@ function isAuthenticatedMockUser(value: unknown): value is AuthenticatedMockUser
   }
 
   const user = value as Record<string, unknown>;
+  const account = user.account as Record<string, unknown> | undefined;
 
   return (
-    typeof user.id === 'string' &&
+    typeof user.id === 'number' &&
     typeof user.name === 'string' &&
     typeof user.email === 'string' &&
-    typeof user.createdAt === 'string' &&
-    typeof user.accountBalance === 'number' &&
-    Array.isArray(user.statementEntries) &&
-    user.statementEntries.every(isStatementEntry)
+    !!account &&
+    typeof account === 'object' &&
+    typeof account.balance === 'number' &&
+    Array.isArray(account.transactions) &&
+    account.transactions.every(isAuthTransaction)
   );
 }
 

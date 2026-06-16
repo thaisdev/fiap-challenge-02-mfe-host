@@ -1,5 +1,5 @@
-import { StatementEntryType } from '../dashboard/_components/interfaces/statement-panel.interfaces';
-import type { AuthenticatedMockUser } from '../home/_services/auth-service';
+import { TransactionType } from '../dashboard/_components/interfaces/transaction.interfaces';
+import type { AuthenticatedMockUser, AuthTransaction } from '../home/_services/auth-service';
 
 export const AUTH_SESSION_STORAGE_KEY = 'mcintosh-bank:auth-session';
 export const AUTH_SESSION_CHANGED_EVENT = 'mcintosh-bank:auth-session-changed';
@@ -15,95 +15,65 @@ function isRecord(value: unknown): value is UnknownRecord {
   return !!value && typeof value === 'object';
 }
 
-function parseCurrencyStringToNumber(value: string): number | null {
-  const normalized = value
-    .trim()
-    .replace(/\s/g, '')
-    .replace('R$', '')
-    .replace(/\./g, '')
-    .replace(',', '.');
-  const numericValue = Number(normalized);
-
-  return Number.isFinite(numericValue) ? numericValue : null;
+function normalizeTransactionType(value: unknown): TransactionType | null {
+  return value === TransactionType.DEPOSIT || value === TransactionType.TRANSFER
+    ? value
+    : null;
 }
 
-function normalizeStatementEntry(
-  value: unknown
-): AuthenticatedMockUser['statementEntries'][number] | null {
+function normalizeTransaction(value: unknown): AuthTransaction | null {
   if (!isRecord(value)) {
     return null;
   }
 
-  const amount =
-    typeof value.amount === 'number'
-      ? value.amount
-      : typeof value.value === 'string'
-        ? parseCurrencyStringToNumber(value.value)
-        : null;
+  const type = normalizeTransactionType(value.type);
 
   if (
-    typeof value.id !== 'string' ||
-    typeof value.month !== 'string' ||
-    typeof value.type !== 'string' ||
+    typeof value.id !== 'number' ||
+    type === null ||
     typeof value.date !== 'string' ||
-    amount === null
+    typeof value.value !== 'number'
   ) {
     return null;
   }
 
   return {
     id: value.id,
-    month: value.month,
-    type: value.type as StatementEntryType,
-    amount,
+    type,
     date: value.date,
+    value: value.value,
   };
 }
 
-function createFallbackStatementEntry(
-  index: number
-): AuthenticatedMockUser['statementEntries'][number] {
+function createFallbackTransaction(index: number): AuthTransaction {
   const date = new Date();
   date.setHours(12, 0, 0, 0);
   date.setDate(date.getDate() - (index * 3 + 2));
 
-  const monthLabel = new Intl.DateTimeFormat('pt-BR', {
-    month: 'long',
-    timeZone: 'America/Sao_Paulo',
-  }).format(date);
-
-  const dateLabel = new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: 'America/Sao_Paulo',
-  }).format(date);
-
   const isTransfer = index % 2 === 1;
 
   return {
-    id: `fallback-session-entry-${index}-${dateLabel.replace(/\//g, '-')}`,
-    month: `${monthLabel.charAt(0).toUpperCase()}${monthLabel.slice(1)}`,
-    type: isTransfer ? StatementEntryType.TRANSFER : StatementEntryType.DEPOSIT,
-    amount: isTransfer ? -(35 + index * 3) : 65 + index * 5,
-    date: dateLabel,
+    id: Date.now() + index,
+    type: isTransfer ? TransactionType.TRANSFER : TransactionType.DEPOSIT,
+    date: date.toISOString(),
+    value: isTransfer ? 35 + index * 3 : 65 + index * 5,
   };
 }
 
-function ensureMinimumStatementEntries(
-  entries: AuthenticatedMockUser['statementEntries'],
-  minimumEntries: number = 8
+function ensureMinimumTransactions(
+  transactions: AuthTransaction[],
+  minimumTransactions: number = 8
 ) {
-  if (entries.length >= minimumEntries) {
-    return entries;
+  if (transactions.length >= minimumTransactions) {
+    return transactions;
   }
 
-  const missingEntriesCount = minimumEntries - entries.length;
-  const fallbackEntries = Array.from({ length: missingEntriesCount }, (_, index) =>
-    createFallbackStatementEntry(index)
+  const missingTransactionsCount = minimumTransactions - transactions.length;
+  const fallbackTransactions = Array.from({ length: missingTransactionsCount }, (_, index) =>
+    createFallbackTransaction(index)
   );
 
-  return [...entries, ...fallbackEntries];
+  return [...transactions, ...fallbackTransactions];
 }
 
 export function normalizeAuthSession(value: unknown): AuthSession | null {
@@ -111,28 +81,23 @@ export function normalizeAuthSession(value: unknown): AuthSession | null {
     return null;
   }
 
-  const accountBalance =
-    typeof value.user.accountBalance === 'number'
-      ? value.user.accountBalance
-      : typeof value.user.accountBalance === 'string'
-        ? parseCurrencyStringToNumber(value.user.accountBalance)
-        : null;
-
-  const rawEntries = Array.isArray(value.user.statementEntries) ? value.user.statementEntries : [];
-  const normalizedEntries = rawEntries
-    .map(normalizeStatementEntry)
-    .filter((entry): entry is AuthenticatedMockUser['statementEntries'][number] => entry !== null);
-  const statementEntries = ensureMinimumStatementEntries(normalizedEntries);
-
   if (
-    typeof value.user.id !== 'string' ||
+    typeof value.user.id !== 'number' ||
     typeof value.user.name !== 'string' ||
     typeof value.user.email !== 'string' ||
-    typeof value.user.createdAt !== 'string' ||
-    accountBalance === null
+    !isRecord(value.user.account) ||
+    typeof value.user.account.balance !== 'number'
   ) {
     return null;
   }
+
+  const rawTransactions = Array.isArray(value.user.account.transactions)
+    ? value.user.account.transactions
+    : [];
+  const normalizedTransactions = rawTransactions
+    .map(normalizeTransaction)
+    .filter((transaction): transaction is AuthTransaction => transaction !== null);
+  const transactions = ensureMinimumTransactions(normalizedTransactions);
 
   return {
     token: value.token,
@@ -140,9 +105,10 @@ export function normalizeAuthSession(value: unknown): AuthSession | null {
       id: value.user.id,
       name: value.user.name,
       email: value.user.email,
-      createdAt: value.user.createdAt,
-      accountBalance,
-      statementEntries,
+      account: {
+        balance: value.user.account.balance,
+        transactions,
+      },
     },
   };
 }

@@ -1,35 +1,24 @@
 import type { NewTransactionResult } from "./new-transaction-panel.interfaces";
 import {
-  StatementEntryType,
   TransactionType,
-  formatStatementEntryTypeLabel,
-  normalizeStatementEntryType,
-  toStatementEntryType,
+  formatTransactionTypeLabel,
   toTransactionType,
 } from "./transaction.interfaces";
 
-export {
-  StatementEntryType,
-  TransactionType,
-  formatStatementEntryTypeLabel,
-  normalizeStatementEntryType,
-  toStatementEntryType,
-  toTransactionType,
-};
+export { TransactionType, formatTransactionTypeLabel, toTransactionType };
 
-export type StatementEntry = {
-  id: string;
-  month: string;
-  type: StatementEntryType;
-  amount: number;
-  date: string;
-};
-
-export type EditStatementEntryPayload = {
-  entryId: string;
+export type Transaction = {
+  id: number;
   type: TransactionType;
-  amount: number;
+  date: string;
+  value: number;
+};
+
+export type EditTransactionPayload = {
+  transactionId: number;
+  type: TransactionType;
+  value: number;
   transactionDate: string;
 };
 
-export type EditStatementEntryResult = NewTransactionResult;
+export type EditTransactionResult = NewTransactionResult;

@@ -4,7 +4,7 @@ export { TransactionType };
 
 export type NewTransactionPayload = {
   type: TransactionType;
-  amount: number;
+  value: number;
   transactionDate: string;
 };
 

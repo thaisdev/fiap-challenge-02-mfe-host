@@ -9,6 +9,23 @@ import {
   type AuthSession,
 } from './auth-session';
 
+const baseUser = {
+  id: 969,
+  name: 'Joana da Silva Oliveira',
+  email: 'joana@mail.com',
+  account: {
+    balance: 2500,
+    transactions: [
+      {
+        id: 123,
+        type: 'DEPOSIT',
+        date: '2026-06-14T19:48:00Z',
+        value: 50,
+      },
+    ],
+  },
+};
+
 describe('auth-session', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -19,89 +36,21 @@ describe('auth-session', () => {
   it('normaliza sessao no formato atual', () => {
     const normalized = normalizeAuthSession({
       token: 'mock-token-user-1',
-      user: {
-        id: 'user-1',
-        name: 'Joana da Silva Oliveira',
-        email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 2500,
-        statementEntries: [
-          {
-            id: 'entry-1',
-            month: 'Novembro',
-            type: 'Deposito',
-            amount: 50,
-            date: '21/11/2022',
-          },
-        ],
-      },
+      user: baseUser,
     });
 
     expect(normalized).not.toBeNull();
     expect(normalized?.token).toBe('mock-token-user-1');
-    expect(normalized?.user.id).toBe('user-1');
-    expect(normalized?.user.accountBalance).toBe(2500);
-    expect(normalized?.user.statementEntries).toHaveLength(8);
-    expect(normalized?.user.statementEntries).toEqual(
+    expect(normalized?.user.id).toBe(969);
+    expect(normalized?.user.account.balance).toBe(2500);
+    expect(normalized?.user.account.transactions).toHaveLength(8);
+    expect(normalized?.user.account.transactions).toEqual(
       expect.arrayContaining([
         {
-          id: 'entry-1',
-          month: 'Novembro',
-          type: 'Deposito',
-          amount: 50,
-          date: '21/11/2022',
-        },
-      ])
-    );
-  });
-
-  it('normaliza sessao legado com saldo e extrato em string', () => {
-    const parsed = parseAuthSession(
-      JSON.stringify({
-        token: 'mock-token-user-1',
-        user: {
-          id: 'user-1',
-          name: 'Joana da Silva Oliveira',
-          email: 'joana@mail.com',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          accountBalance: 'R$ 2.500,00',
-          statementEntries: [
-            {
-              id: 'entry-1',
-              month: 'Novembro',
-              type: 'Deposito',
-              value: 'R$ 50',
-              date: '21/11/2022',
-            },
-            {
-              id: 'entry-2',
-              month: 'Novembro',
-              type: 'Transferencia',
-              value: '-R$ 500',
-              date: '21/11/2022',
-            },
-          ],
-        },
-      })
-    );
-
-    expect(parsed?.user.accountBalance).toBe(2500);
-    expect(parsed?.user.statementEntries).toHaveLength(8);
-    expect(parsed?.user.statementEntries).toEqual(
-      expect.arrayContaining([
-        {
-          id: 'entry-1',
-          month: 'Novembro',
-          type: 'Deposito',
-          amount: 50,
-          date: '21/11/2022',
-        },
-        {
-          id: 'entry-2',
-          month: 'Novembro',
-          type: 'Transferencia',
-          amount: -500,
-          date: '21/11/2022',
+          id: 123,
+          type: 'DEPOSIT',
+          date: '2026-06-14T19:48:00Z',
+          value: 50,
         },
       ])
     );
@@ -119,73 +68,74 @@ describe('auth-session', () => {
     expect(normalizeAuthSession({})).toBeNull();
   });
 
-  it('descarta entradas invalidas e rejeita saldo legado invalido', () => {
+  it('descarta transacoes invalidas do extrato', () => {
     const normalized = normalizeAuthSession({
       token: 'mock-token-user-1',
       user: {
-        id: 'user-1',
-        name: 'Joana da Silva Oliveira',
-        email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 'R$ valor-invalido',
-        statementEntries: [
-          null,
-          { id: 'entry-1', month: 'Novembro', type: 'Deposito', value: 5000, date: '21/11/2022' },
-        ],
+        ...baseUser,
+        account: {
+          balance: 2500,
+          transactions: [
+            null,
+            { id: 123, type: 'PIX', date: '2026-06-14T19:48:00Z', value: 50 },
+            { id: '123', type: 'DEPOSIT', date: '2026-06-14T19:48:00Z', value: 50 },
+          ],
+        },
       },
+    });
+
+    expect(normalized).not.toBeNull();
+    expect(normalized?.user.account.transactions).toHaveLength(8);
+  });
+
+  it('retorna null quando id do usuario nao e number', () => {
+    const normalized = normalizeAuthSession({
+      token: 'mock-token-user-1',
+      user: { ...baseUser, id: 'user-1' },
     });
 
     expect(normalized).toBeNull();
   });
 
-  it('retorna null quando saldo nao e number nem string', () => {
+  it('retorna null quando saldo da conta nao e number', () => {
     const normalized = normalizeAuthSession({
       token: 'mock-token-user-1',
-      user: {
-        id: 'user-1',
-        name: 'Joana da Silva Oliveira',
-        email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: true,
-        statementEntries: [],
-      },
+      user: { ...baseUser, account: { ...baseUser.account, balance: 'R$ 2.500,00' } },
     });
 
     expect(normalized).toBeNull();
   });
 
-  it('usa extrato vazio quando statementEntries nao e array', () => {
+  it('retorna null quando account esta ausente', () => {
+    const normalized = normalizeAuthSession({
+      token: 'mock-token-user-1',
+      user: { id: 969, name: 'Joana', email: 'joana@mail.com' },
+    });
+
+    expect(normalized).toBeNull();
+  });
+
+  it('usa extrato vazio quando transactions nao e array', () => {
     const normalized = normalizeAuthSession({
       token: 'mock-token-user-1',
       user: {
-        id: 'user-1',
-        name: 'Joana da Silva Oliveira',
-        email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 2500,
-        statementEntries: 'invalido',
+        ...baseUser,
+        account: { balance: 2500, transactions: 'invalido' },
       },
     });
 
     expect(normalized).not.toBeNull();
     expect(normalized?.token).toBe('mock-token-user-1');
-    expect(normalized?.user.id).toBe('user-1');
-    expect(normalized?.user.accountBalance).toBe(2500);
-    expect(normalized?.user.statementEntries).toHaveLength(8);
+    expect(normalized?.user.id).toBe(969);
+    expect(normalized?.user.account.balance).toBe(2500);
+    expect(normalized?.user.account.transactions).toHaveLength(8);
   });
 
   it('salva sessao e dispara evento de atualizacao', () => {
     const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
     const session: AuthSession = {
       token: 'mock-token-user-1',
-      user: {
-        id: 'user-1',
-        name: 'Joana da Silva Oliveira',
-        email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 2500,
-        statementEntries: [],
-      },
+      user: { ...baseUser, account: { balance: 2500, transactions: [] } },
     };
 
     setAuthSession(session);
@@ -215,14 +165,7 @@ describe('auth-session', () => {
 
     const session: AuthSession = {
       token: 'mock-token-user-1',
-      user: {
-        id: 'user-1',
-        name: 'Joana da Silva Oliveira',
-        email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 2500,
-        statementEntries: [],
-      },
+      user: { ...baseUser, account: { balance: 2500, transactions: [] } },
     };
 
     expect(() => setAuthSession(session)).not.toThrow();
@@ -249,14 +192,7 @@ describe('auth-session', () => {
 
     const session: AuthSession = {
       token: 'mock-token-user-1',
-      user: {
-        id: 'user-1',
-        name: 'Joana da Silva Oliveira',
-        email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 2500,
-        statementEntries: [],
-      },
+      user: { ...baseUser, account: { balance: 2500, transactions: [] } },
     };
 
     setAuthSession(session);

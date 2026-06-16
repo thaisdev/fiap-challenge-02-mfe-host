@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthSession } from '@/app/lib/auth-session';
 import { withAuth } from './with-auth';
-import { StatementEntryType } from './interfaces/transaction.interfaces';
+import { TransactionType } from './interfaces/transaction.interfaces';
 
 const { replaceMock, routerMock } = vi.hoisted(() => ({
   replaceMock: vi.fn(),
@@ -35,20 +35,20 @@ const GuardedDummyPanel = withAuth(DummyPanel);
 const authenticatedSession: AuthSession = {
   token: 'mock-token-user-1',
   user: {
-    id: 'user-1',
+    id: 969,
     name: 'Joana da Silva Oliveira',
     email: 'joana@mail.com',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    accountBalance: 2500,
-    statementEntries: [
-      {
-        id: 'entry-1',
-        month: 'Novembro',
-        type: StatementEntryType.DEPOSIT,
-        amount: 50,
-        date: '21/11/2022',
-      },
-    ],
+    account: {
+      balance: 2500,
+      transactions: [
+        {
+          id: 123,
+          type: TransactionType.DEPOSIT,
+          date: '2026-06-14T19:48:00Z',
+          value: 50,
+        },
+      ],
+    },
   },
 };
 

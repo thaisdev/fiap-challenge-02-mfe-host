@@ -28,34 +28,30 @@ function authenticatedContext(name = 'Joana da Silva Oliveira') {
     },
     status: 'authenticated',
     balance: 2500,
-    statementEntries: [
+    transactions: [
       {
-        id: '3',
-        month: 'Abril',
-        type: 'Deposito',
-        amount: 50,
+        id: 3,
+        type: 'DEPOSIT',
         date: 'data invalida',
+        value: 50,
       },
       {
-        id: '1',
-        month: 'Abril',
-        type: 'Deposito',
-        amount: 2500,
-        date: '21/04/2026',
+        id: 1,
+        type: 'DEPOSIT',
+        date: '2026-04-21T12:00:00.000Z',
+        value: 2500,
       },
       {
-        id: '2',
-        month: 'Abril',
-        type: 'Transferencia',
-        amount: -100,
-        date: '20/04/2026',
+        id: 2,
+        type: 'TRANSFER',
+        date: '2026-04-20T12:00:00.000Z',
+        value: 100,
       },
       {
-        id: '4',
-        month: 'Abril',
-        type: 'Deposito',
-        amount: 50,
+        id: 4,
+        type: 'DEPOSIT',
         date: 'outra data invalida',
+        value: 50,
       },
     ],
   };
@@ -86,7 +82,7 @@ describe('DashboardLayout', () => {
       ...authenticatedContext(),
       session: null,
       status: 'unauthenticated',
-      statementEntries: [],
+      transactions: [],
     });
 
     const { container } = render(
@@ -104,7 +100,7 @@ describe('DashboardLayout', () => {
       ...authenticatedContext(),
       session: null,
       status: 'loading',
-      statementEntries: [],
+      transactions: [],
     });
 
     const { container } = render(

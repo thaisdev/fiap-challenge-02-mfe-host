@@ -11,10 +11,9 @@ describe('auth-service', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
-        id: 'user-1',
+        id: 969,
         name: 'Maria',
         email: 'maria@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
       }),
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -124,20 +123,20 @@ describe('auth-service', () => {
         json: vi.fn().mockResolvedValue({
           users: [
             {
-              id: 'user-1',
+              id: 969,
               name: 'Joana',
               email: 'joana@mail.com',
-              createdAt: '2026-01-01T00:00:00.000Z',
-              accountBalance: 2500,
-              statementEntries: [
-                {
-                  id: 'entry-1',
-                  month: 'Novembro',
-                  type: 'Deposito',
-                  amount: 100,
-                  date: '21/11/2022',
-                },
-              ],
+              account: {
+                balance: 2500,
+                transactions: [
+                  {
+                    id: 123,
+                    type: 'DEPOSIT',
+                    date: '2026-06-14T19:48:00Z',
+                    value: 100,
+                  },
+                ],
+              },
             },
           ],
         }),
@@ -165,20 +164,20 @@ describe('auth-service', () => {
       message: 'Login realizado com sucesso.',
       token: 'mock-token-user-1',
       user: {
-        id: 'user-1',
+        id: 969,
         name: 'Joana',
         email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 2500,
-        statementEntries: [
-          {
-            id: 'entry-1',
-            month: 'Novembro',
-            type: 'Deposito',
-            amount: 100,
-            date: '21/11/2022',
-          },
-        ],
+        account: {
+          balance: 2500,
+          transactions: [
+            {
+              id: 123,
+              type: 'DEPOSIT',
+              date: '2026-06-14T19:48:00Z',
+              value: 100,
+            },
+          ],
+        },
       },
     });
   });
@@ -258,12 +257,13 @@ describe('auth-service', () => {
         json: vi.fn().mockResolvedValue({
           users: [
             {
-              id: 'user-1',
+              id: 969,
               name: 'Joana',
               email: 'joana@mail.com',
-              createdAt: '2026-01-01T00:00:00.000Z',
-              accountBalance: 2500,
-              statementEntries: [123],
+              account: {
+                balance: 2500,
+                transactions: [123],
+              },
             },
           ],
         }),
@@ -288,7 +288,7 @@ describe('auth-service', () => {
     expect(fetchMock).toHaveBeenNthCalledWith(2, '/api/mock/users');
     expect(result).toEqual({
       ok: false,
-      message: 'Login realizado com sucesso.',
+      message: 'Nao foi possivel autenticar. Revise seus dados.',
     });
   });
 

@@ -1,22 +1,24 @@
-﻿export type MockUser = {
-  id: string;
+export type MockTransaction = {
+  id: number;
+  type: "DEPOSIT" | "TRANSFER";
+  date: string;
+  value: number;
+};
+
+export type MockAccount = {
+  balance: number;
+  transactions: MockTransaction[];
+};
+
+export type MockUser = {
+  id: number;
   name: string;
   email: string;
   password: string;
-  createdAt: string;
-  accountBalance: number;
-  statementEntries: MockStatementEntry[];
+  account: MockAccount;
 };
 
 export type PublicMockUser = Omit<MockUser, "password">;
-
-export type MockStatementEntry = {
-  id: string;
-  month: string;
-  type: string;
-  amount: number;
-  date: string;
-};
 
 type RegisterMockUserInput = {
   name: string;
@@ -55,49 +57,27 @@ function isPasswordValid(password: string) {
   return password.trim().length >= 6;
 }
 
+function createMockId() {
+  return Date.now() + Math.floor(Math.random() * 1000);
+}
+
 function toPublicUser(user: MockUser): PublicMockUser {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    createdAt: user.createdAt,
-    accountBalance: user.accountBalance,
-    statementEntries: user.statementEntries.map((entry) => ({ ...entry })),
+    account: {
+      balance: user.account.balance,
+      transactions: user.account.transactions.map((transaction) => ({ ...transaction })),
+    },
   };
 }
 
-function createMockToken(userId: string) {
+function createMockToken(userId: number) {
   return `mock-token-${userId}`;
 }
 
-const DEFAULT_STATEMENT_TIME_ZONE = "America/Sao_Paulo";
-
-function getCurrentStatementYear(referenceDate: Date = new Date()) {
-  const yearLabel = new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    timeZone: DEFAULT_STATEMENT_TIME_ZONE,
-  }).format(referenceDate);
-
-  return Number(yearLabel);
-}
-
-function formatStatementDateLabel(referenceDate: Date) {
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    timeZone: DEFAULT_STATEMENT_TIME_ZONE,
-  }).format(referenceDate);
-}
-
-function formatStatementMonthLabel(referenceDate: Date) {
-  const monthLabel = new Intl.DateTimeFormat("pt-BR", {
-    month: "long",
-    timeZone: DEFAULT_STATEMENT_TIME_ZONE,
-  }).format(referenceDate);
-
-  return `${monthLabel.charAt(0).toUpperCase()}${monthLabel.slice(1)}`;
-}
+const DEFAULT_TRANSACTION_TIME_ZONE = "America/Sao_Paulo";
 
 function createDateFromDaysAgo(daysAgo: number) {
   const date = new Date();
@@ -110,40 +90,48 @@ function createDateInYear(year: number, month: number, day: number) {
   return new Date(Date.UTC(year, month, day, 12));
 }
 
-function createStatementEntry(referenceDate: Date, type: "Deposit" | "Transfer", amount: number) {
-  return {
-    id: crypto.randomUUID(),
-    month: formatStatementMonthLabel(referenceDate),
-    type,
-    amount,
-    date: formatStatementDateLabel(referenceDate),
-  } satisfies MockStatementEntry;
+function getCurrentTransactionYear(referenceDate: Date = new Date()) {
+  const yearLabel = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    timeZone: DEFAULT_TRANSACTION_TIME_ZONE,
+  }).format(referenceDate);
+
+  return Number(yearLabel);
 }
 
-function createDefaultStatementEntries() {
-  const currentYear = getCurrentStatementYear();
+function createMockTransaction(referenceDate: Date, type: "DEPOSIT" | "TRANSFER", value: number) {
+  return {
+    id: createMockId(),
+    type,
+    date: referenceDate.toISOString(),
+    value,
+  } satisfies MockTransaction;
+}
+
+function createDefaultTransactions() {
+  const currentYear = getCurrentTransactionYear();
   const previousYear = currentYear - 1;
 
   return [
-    createStatementEntry(createDateFromDaysAgo(1), "Deposit", 180),
-    createStatementEntry(createDateFromDaysAgo(3), "Transfer", -72),
-    createStatementEntry(createDateFromDaysAgo(7), "Deposit", 95),
-    createStatementEntry(createDateFromDaysAgo(11), "Transfer", -185),
-    createStatementEntry(createDateFromDaysAgo(16), "Deposit", 240),
-    createStatementEntry(createDateFromDaysAgo(24), "Deposit", 125),
-    createStatementEntry(createDateInYear(previousYear, 10, 21), "Deposit", 100),
-    createStatementEntry(createDateInYear(previousYear, 10, 18), "Deposit", 50),
-    createStatementEntry(createDateInYear(previousYear, 9, 12), "Transfer", -500),
-    createStatementEntry(createDateInYear(previousYear, 8, 2), "Deposit", 150),
-  ] satisfies MockStatementEntry[];
+    createMockTransaction(createDateFromDaysAgo(1), "DEPOSIT", 180),
+    createMockTransaction(createDateFromDaysAgo(3), "TRANSFER", 72),
+    createMockTransaction(createDateFromDaysAgo(7), "DEPOSIT", 95),
+    createMockTransaction(createDateFromDaysAgo(11), "TRANSFER", 185),
+    createMockTransaction(createDateFromDaysAgo(16), "DEPOSIT", 240),
+    createMockTransaction(createDateFromDaysAgo(24), "DEPOSIT", 125),
+    createMockTransaction(createDateInYear(previousYear, 10, 21), "DEPOSIT", 100),
+    createMockTransaction(createDateInYear(previousYear, 10, 18), "DEPOSIT", 50),
+    createMockTransaction(createDateInYear(previousYear, 9, 12), "TRANSFER", 500),
+    createMockTransaction(createDateInYear(previousYear, 8, 2), "DEPOSIT", 150),
+  ] satisfies MockTransaction[];
 }
 
-function ensureUserHasDefaultEntries(user: MockUser) {
-  if (user.statementEntries.length >= 8) {
+function ensureUserHasDefaultTransactions(user: MockUser) {
+  if (user.account.transactions.length >= 8) {
     return;
   }
 
-  user.statementEntries = createDefaultStatementEntries();
+  user.account.transactions = createDefaultTransactions();
 }
 
 export function registerMockUser({
@@ -170,13 +158,14 @@ export function registerMockUser({
   }
 
   const newUser: MockUser = {
-    id: crypto.randomUUID(),
+    id: createMockId(),
     name: name.trim(),
     email: normalizedEmail,
     password,
-    createdAt: new Date().toISOString(),
-    accountBalance: 2500,
-    statementEntries: createDefaultStatementEntries(),
+    account: {
+      balance: 2500,
+      transactions: createDefaultTransactions(),
+    },
   };
 
   users.push(newUser);
@@ -205,7 +194,7 @@ export function loginMockUser({
     };
   }
 
-  ensureUserHasDefaultEntries(user);
+  ensureUserHasDefaultTransactions(user);
 
   return {
     ok: true,

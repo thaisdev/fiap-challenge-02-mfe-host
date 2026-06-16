@@ -79,20 +79,20 @@ describe('LoginForm', () => {
       message: 'Login realizado com sucesso.',
       token: 'mock-token-user-1',
       user: {
-        id: 'user-1',
+        id: 969,
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 2500,
-        statementEntries: [
-          {
-            id: 'entry-1',
-            month: 'Novembro',
-            type: 'Deposito',
-            amount: 50,
-            date: '21/11/2022',
-          },
-        ],
+        account: {
+          balance: 2500,
+          transactions: [
+            {
+              id: 123,
+              type: 'DEPOSIT',
+              date: '2026-06-14T19:48:00Z',
+              value: 50,
+            },
+          ],
+        },
       },
     });
 
@@ -115,20 +115,20 @@ describe('LoginForm', () => {
     expect(stored ? JSON.parse(stored) : null).toEqual({
       token: 'mock-token-user-1',
       user: {
-        id: 'user-1',
+        id: 969,
         name: 'Joana da Silva Oliveira',
         email: 'joana@mail.com',
-        createdAt: '2026-01-01T00:00:00.000Z',
-        accountBalance: 2500,
-        statementEntries: [
-          {
-            id: 'entry-1',
-            month: 'Novembro',
-            type: 'Deposito',
-            amount: 50,
-            date: '21/11/2022',
-          },
-        ],
+        account: {
+          balance: 2500,
+          transactions: [
+            {
+              id: 123,
+              type: 'DEPOSIT',
+              date: '2026-06-14T19:48:00Z',
+              value: 50,
+            },
+          ],
+        },
       },
     });
     expect(sessionStorage.getItem('mcintosh-bank:auth-token')).toBe('mock-token-user-1');

@@ -7,7 +7,7 @@ const onSubmitTransactionMock = vi.fn<
   [
     payload: {
       type: TransactionType;
-      amount: number;
+      value: number;
       transactionDate: string;
     },
   ],
@@ -148,7 +148,7 @@ describe('NewTransactionPanel', () => {
 
     expect(onSubmitTransactionMock).toHaveBeenCalledWith({
       type: TransactionType.DEPOSIT,
-      amount: 1234.56,
+      value: 1234.56,
       transactionDate: '2026-04-19',
     });
     expect(typeSelect).toHaveValue('');
