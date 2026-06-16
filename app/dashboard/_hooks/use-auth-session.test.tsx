@@ -28,20 +28,9 @@ describe('useAuthSession', () => {
       JSON.stringify({
         token: 'mock-token-user-1',
         user: {
-          id: 'user-1',
+          id: 969,
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          accountBalanceInCents: 250000,
-          statementEntries: [
-            {
-              id: 'entry-1',
-              month: 'Novembro',
-              type: 'Deposito',
-              amountInCents: 5000,
-              date: '21/11/2022',
-            },
-          ],
         },
       })
     );
@@ -53,7 +42,7 @@ describe('useAuthSession', () => {
     });
 
     expect(result.current.session?.user.name).toBe('Joana da Silva Oliveira');
-    expect(result.current.session?.user.accountBalanceInCents).toBe(250000);
+    expect(result.current.session?.user.id).toBe(969);
   });
 
   it('retorna unauthenticated quando json salvo esta invalido', async () => {
@@ -80,12 +69,9 @@ describe('useAuthSession', () => {
       JSON.stringify({
         token: 'mock-token-user-1',
         user: {
-          id: 'user-1',
+          id: 969,
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          accountBalanceInCents: 250000,
-          statementEntries: [],
         },
       })
     );
@@ -144,12 +130,9 @@ describe('useAuthSession', () => {
       JSON.stringify({
         token: 'mock-token-user-1',
         user: {
-          id: 'user-1',
+          id: 969,
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          accountBalanceInCents: 250000,
-          statementEntries: [],
         },
       })
     );
@@ -163,26 +146,16 @@ describe('useAuthSession', () => {
     });
   });
 
-  it('normaliza sessao legado e persiste no formato atual', async () => {
+  it('persiste sessao normalizada descartando campos extras', async () => {
     sessionStorage.setItem(
       AUTH_SESSION_STORAGE_KEY,
       JSON.stringify({
         token: 'mock-token-user-1',
         user: {
-          id: 'user-1',
+          id: 969,
           name: 'Joana da Silva Oliveira',
           email: 'joana@mail.com',
-          createdAt: '2026-01-01T00:00:00.000Z',
-          accountBalance: 'R$ 2.500,00',
-          statementEntries: [
-            {
-              id: 'entry-1',
-              month: 'Novembro',
-              type: 'Deposito',
-              value: 'R$ 50',
-              date: '21/11/2022',
-            },
-          ],
+          account: { balance: 2500, transactions: [] },
         },
       })
     );
@@ -198,7 +171,10 @@ describe('useAuthSession', () => {
     ) as Record<string, unknown>;
     const normalizedUser = normalizedSession.user as Record<string, unknown>;
 
-    expect(normalizedUser.accountBalanceInCents).toBe(250000);
-    expect(normalizedUser).not.toHaveProperty('accountBalance');
+    expect(normalizedUser).toEqual({
+      id: 969,
+      name: 'Joana da Silva Oliveira',
+      email: 'joana@mail.com',
+    });
   });
 });

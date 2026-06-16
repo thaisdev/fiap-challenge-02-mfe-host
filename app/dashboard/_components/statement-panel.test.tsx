@@ -1,16 +1,16 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { StatementPanel } from './statement-panel';
-import { StatementEntryType, TransactionType } from './interfaces/statement-panel.interfaces';
+import { TransactionType } from './interfaces/statement-panel.interfaces';
 
-const onDeleteStatementEntryMock = vi.fn();
-const onEditStatementEntryMock = vi.fn();
+const onDeleteTransactionMock = vi.fn();
+const onEditTransactionMock = vi.fn();
 
-vi.mock('@/app/context/auth-session-context', () => ({
-  useAuthSessionContext: () => ({
-    statementEntries: [],
-    onDeleteStatementEntry: onDeleteStatementEntryMock,
-    onEditStatementEntry: onEditStatementEntryMock,
+vi.mock('../_state/account-context', () => ({
+  useAccountContext: () => ({
+    transactions: [],
+    onDeleteTransaction: onDeleteTransactionMock,
+    onEditTransaction: onEditTransactionMock,
   }),
 }));
 
@@ -25,9 +25,10 @@ function getEntryByDate(date: string) {
 
 describe('StatementPanel', () => {
   beforeEach(() => {
-    onDeleteStatementEntryMock.mockReset();
-    onEditStatementEntryMock.mockReset();
-    onEditStatementEntryMock.mockReturnValue({ ok: true as const });
+    onDeleteTransactionMock.mockReset();
+    onEditTransactionMock.mockReset();
+    onDeleteTransactionMock.mockResolvedValue({ ok: true as const });
+    onEditTransactionMock.mockResolvedValue({ ok: true as const });
   });
 
   it('renderiza titulo e lancamentos do extrato e habilita acoes ao selecionar item', () => {
@@ -35,18 +36,16 @@ describe('StatementPanel', () => {
       <StatementPanel
         entries={[
           {
-            id: '1',
-            month: 'Novembro',
-            type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
-            date: '18/11/2022',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2022-11-18T12:00:00.000Z',
+            value: 150,
           },
           {
-            id: '2',
-            month: 'Novembro',
-            type: StatementEntryType.TRANSFER,
-            amountInCents: -50000,
-            date: '21/11/2022',
+            id: 2,
+            type: TransactionType.TRANSFER,
+            date: '2022-11-21T12:00:00.000Z',
+            value: 500,
           },
         ]}
       />
@@ -73,11 +72,10 @@ describe('StatementPanel', () => {
         showActions={false}
         entries={[
           {
-            id: '1',
-            month: 'Abril',
-            type: StatementEntryType.DEPOSIT,
-            amountInCents: 1000,
-            date: '21/04/2026',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2026-04-21T12:00:00.000Z',
+            value: 10,
           },
         ]}
       />
@@ -88,16 +86,15 @@ describe('StatementPanel', () => {
     expect(screen.queryByRole('button', { name: 'Excluir extrato' })).not.toBeInTheDocument();
   });
 
-  it('abre modal de edicao e envia payload completo de tipo, valor e data', () => {
+  it('abre modal de edicao e envia payload completo de tipo, valor e data', async () => {
     render(
       <StatementPanel
         entries={[
           {
-            id: '1',
-            month: 'Novembro',
-            type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
-            date: '18/11/2022',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2022-11-18T12:00:00.000Z',
+            value: 150,
           },
         ]}
       />
@@ -123,17 +120,20 @@ describe('StatementPanel', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Salvar edi/i }));
 
-    expect(onEditStatementEntryMock).toHaveBeenCalledWith({
-      entryId: '1',
+    expect(onEditTransactionMock).toHaveBeenCalledWith({
+      transactionId: 1,
       type: TransactionType.TRANSFER,
-      amountInCents: 70000,
+      value: 700,
       transactionDate: '2026-04-22',
     });
-    expect(screen.queryByRole('heading', { name: /Editar trans/i })).not.toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: /Editar trans/i })).not.toBeInTheDocument();
+    });
   });
 
-  it('mantem modal aberto e mostra alerta quando a edicao retorna erro', () => {
-    onEditStatementEntryMock.mockReturnValue({
+  it('mantem modal aberto e mostra alerta quando a edicao retorna erro', async () => {
+    onEditTransactionMock.mockResolvedValue({
       ok: false as const,
       message: 'Saldo insuficiente para concluir a transferencia.',
     });
@@ -142,11 +142,10 @@ describe('StatementPanel', () => {
       <StatementPanel
         entries={[
           {
-            id: '1',
-            month: 'Novembro',
-            type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
-            date: '18/11/2022',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2022-11-18T12:00:00.000Z',
+            value: 150,
           },
         ]}
       />
@@ -159,8 +158,11 @@ describe('StatementPanel', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Salvar edi/i }));
 
-    expect(onEditStatementEntryMock).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('alert')).toHaveTextContent('Saldo insuficiente');
+    expect(onEditTransactionMock).toHaveBeenCalledTimes(1);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Saldo insuficiente');
+    });
     expect(screen.getByRole('heading', { name: /Editar trans/i })).toBeInTheDocument();
   });
 
@@ -169,11 +171,10 @@ describe('StatementPanel', () => {
       <StatementPanel
         entries={[
           {
-            id: '1',
-            month: 'Novembro',
-            type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
-            date: '18/11/2022',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2022-11-18T12:00:00.000Z',
+            value: 150,
           },
         ]}
       />
@@ -196,11 +197,10 @@ describe('StatementPanel', () => {
       <StatementPanel
         entries={[
           {
-            id: '1',
-            month: 'Novembro',
-            type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
-            date: '18/11/2022',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2022-11-18T12:00:00.000Z',
+            value: 150,
           },
         ]}
       />
@@ -222,11 +222,10 @@ describe('StatementPanel', () => {
       <StatementPanel
         entries={[
           {
-            id: '1',
-            month: 'Novembro',
-            type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
-            date: '18/11/2022',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2022-11-18T12:00:00.000Z',
+            value: 150,
           },
         ]}
       />
@@ -246,11 +245,10 @@ describe('StatementPanel', () => {
       <StatementPanel
         entries={[
           {
-            id: '1',
-            month: 'Novembro',
-            type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
-            date: '18/11/2022',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2022-11-18T12:00:00.000Z',
+            value: 150,
           },
         ]}
       />
@@ -267,8 +265,8 @@ describe('StatementPanel', () => {
     fireEvent.click(editButton);
     fireEvent.click(deleteButton);
 
-    expect(onEditStatementEntryMock).not.toHaveBeenCalled();
-    expect(onDeleteStatementEntryMock).not.toHaveBeenCalled();
+    expect(onEditTransactionMock).not.toHaveBeenCalled();
+    expect(onDeleteTransactionMock).not.toHaveBeenCalled();
   });
 
   it('fecha modal com Escape e exclui item selecionado', () => {
@@ -276,11 +274,10 @@ describe('StatementPanel', () => {
       <StatementPanel
         entries={[
           {
-            id: '1',
-            month: 'Novembro',
-            type: StatementEntryType.DEPOSIT,
-            amountInCents: 15000,
-            date: '18/11/2022',
+            id: 1,
+            type: TransactionType.DEPOSIT,
+            date: '2022-11-18T12:00:00.000Z',
+            value: 150,
           },
         ]}
       />
@@ -294,6 +291,6 @@ describe('StatementPanel', () => {
     expect(screen.queryByRole('heading', { name: /Editar trans/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Excluir extrato' }));
-    expect(onDeleteStatementEntryMock).toHaveBeenCalledWith('1');
+    expect(onDeleteTransactionMock).toHaveBeenCalledWith(1);
   });
 });

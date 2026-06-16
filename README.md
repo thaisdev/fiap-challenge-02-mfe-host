@@ -14,7 +14,7 @@ Este repositório faz parte do **Tech Challenge** da pós-graduação em Fronten
 
 ### Disponíveis
 
-- Cadastro e login de usuário (mock)
+- Cadastro e login de usuário
 - Visualização de resumo da conta
 - Consulta de extrato bancário
 - Efetuar transação
@@ -43,13 +43,35 @@ Este repositório faz parte do **Tech Challenge** da pós-graduação em Fronten
 - Node.js **20.19.5** ou superior (menor que 21)
 - npm **10.x** (menor que 11)
 
-### 2. Instalação das dependências
+### 2. Subindo a API
+
+A aplicação depende de uma API REST externa. Para rodá-la localmente:
+
+1. Clone o repositório da API:
+
+```bash
+git clone https://github.com/thaisdev/fiap-techchallenge-02-api
+```
+
+2. Siga as instruções do `README` do repositório clonado para instalar e iniciar a API.
+
+A API ficará disponível em **http://localhost:3333**.
+
+### 3. Variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo (já aponta para a API local):
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3333
+```
+
+### 4. Instalação das dependências
 
 ```bash
 npm install
 ```
 
-### 3. Rodando a aplicação Next.js
+### 5. Rodando a aplicação Next.js
 
 ```bash
 npm run dev
@@ -57,7 +79,7 @@ npm run dev
 
 Acesse: http://localhost:3000
 
-### 4. Rodando o Storybook
+### 6. Rodando o Storybook
 
 ```bash
 npm run storybook
@@ -65,7 +87,7 @@ npm run storybook
 
 Acesse: http://localhost:6006
 
-### 5. Rodando os testes unitários
+### 7. Rodando os testes unitários
 
 ```bash
 npm run test

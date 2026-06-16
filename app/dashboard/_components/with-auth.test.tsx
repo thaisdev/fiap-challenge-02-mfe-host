@@ -34,20 +34,9 @@ const GuardedDummyPanel = withAuth(DummyPanel);
 const authenticatedSession: AuthSession = {
   token: 'mock-token-user-1',
   user: {
-    id: 'user-1',
+    id: 969,
     name: 'Joana da Silva Oliveira',
     email: 'joana@mail.com',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    accountBalanceInCents: 250000,
-    statementEntries: [
-      {
-        id: 'entry-1',
-        month: 'Novembro',
-        type: 'Deposito',
-        amountInCents: 5000,
-        date: '21/11/2022',
-      },
-    ],
   },
 };
 

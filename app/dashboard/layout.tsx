@@ -3,9 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthSessionProvider, useAuthSessionContext } from '@/app/context/auth-session-context';
+import { clearAuthSession } from '@/app/lib/auth-session';
+import { AccountProvider, useAccountContext } from './_state/account-context';
 import { AccountSummaryCard } from './_components/account-summary-card';
 import { DashboardHeader } from './_components/dashboard-header';
-import { getTimestampFromPtBrDate } from './_utils/transaction-date';
+import { Alert } from '@/components/ui/alert';
+import { getTimestampFromTransactionDate } from './_utils/transaction-date';
 import {
   DashboardSidebarItem,
   DashboardSidebarNav,
@@ -48,15 +51,23 @@ function formatCurrentDateLabel() {
 }
 
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
-  const { session, balanceInCents, statementEntries } = useAuthSessionContext();
+  const { session } = useAuthSessionContext();
+  const { balance, transactions, errorMessage } = useAccountContext();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<DashboardTabKey>('home');
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+  const [isErrorVisible, setIsErrorVisible] = useState(true);
   const currentDateLabel = useMemo(() => formatCurrentDateLabel(), []);
 
-  const orderedStatementEntries = useMemo(() => {
-    return [...statementEntries].sort((entryA, entryB) => {
-      const timestampA = getTimestampFromPtBrDate(entryA.date);
-      const timestampB = getTimestampFromPtBrDate(entryB.date);
+  const handleLogout = () => {
+    clearAuthSession();
+    router.push('/home/login');
+  };
+
+  const orderedTransactions = useMemo(() => {
+    return [...transactions].sort((transactionA, transactionB) => {
+      const timestampA = getTimestampFromTransactionDate(transactionA.date);
+      const timestampB = getTimestampFromTransactionDate(transactionB.date);
 
       if (timestampA === null && timestampB === null) {
         return 0;
@@ -72,11 +83,11 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
       return timestampB - timestampA;
     });
-  }, [statementEntries]);
+  }, [transactions]);
 
-  const visibleStatementEntries = useMemo(() => {
-    return orderedStatementEntries.slice(0, 6);
-  }, [orderedStatementEntries]);
+  const visibleTransactions = useMemo(() => {
+    return orderedTransactions.slice(0, 6);
+  }, [orderedTransactions]);
 
   if (!session) {
     return null;
@@ -87,9 +98,19 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden bg-background">
-      <DashboardHeader userName={name} />
+      <DashboardHeader userName={name} onLogout={handleLogout} />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-[688px] px-4 pb-10 pt-8 md:pb-10 md:pt-10 desktop:max-w-[1140px] desktop:px-0 desktop:pb-8 desktop:pt-4">
+          {errorMessage && isErrorVisible ? (
+            <div className="pb-6">
+              <Alert
+                variant="error"
+                message={errorMessage}
+                onClose={() => setIsErrorVisible(false)}
+              />
+            </div>
+          ) : null}
+
           <div className="grid gap-6 desktop:grid-cols-[142px_minmax(0,1fr)_240px] desktop:items-stretch desktop:gap-4">
             <div className="desktop:flex desktop:h-full">
               <DashboardSidebarNav
@@ -105,7 +126,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
                 dateLabel={currentDateLabel}
                 balanceLabel="Saldo"
                 accountLabel="Conta corrente"
-                balanceInCents={balanceInCents}
+                balance={balance}
                 isBalanceVisible={isBalanceVisible}
                 onToggleBalanceVisibility={() => setIsBalanceVisible((current) => !current)}
               />
@@ -113,7 +134,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
             </div>
 
             <div className="desktop:col-start-3 desktop:flex desktop:h-full">
-              <StatementPanel title="Extrato" entries={visibleStatementEntries} />
+              <StatementPanel title="Extrato" entries={visibleTransactions} />
             </div>
           </div>
         </div>
@@ -136,7 +157,11 @@ function AuthGuard({ children }: { children: ReactNode }) {
     return null;
   }
 
-  return <DashboardLayoutContent>{children}</DashboardLayoutContent>;
+  return (
+    <AccountProvider session={session}>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </AccountProvider>
+  );
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

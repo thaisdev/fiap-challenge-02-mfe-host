@@ -1,31 +1,12 @@
 export enum TransactionType {
-  DEPOSIT = "deposit",
-  TRANSFER = "transfer",
+  DEPOSIT = "DEPOSIT",
+  TRANSFER = "TRANSFER",
 }
 
-export enum StatementEntryType {
-  DEPOSIT = "Deposit",
-  TRANSFER = "Transfer",
+export function toTransactionType(value: unknown): TransactionType {
+  return value === TransactionType.TRANSFER ? TransactionType.TRANSFER : TransactionType.DEPOSIT;
 }
 
-export function toStatementEntryType(type: TransactionType): StatementEntryType {
-  return type === TransactionType.DEPOSIT
-    ? StatementEntryType.DEPOSIT
-    : StatementEntryType.TRANSFER;
-}
-
-export function normalizeStatementEntryType(type: string): StatementEntryType {
-  return type === StatementEntryType.TRANSFER || type === "Transferencia"
-    ? StatementEntryType.TRANSFER
-    : StatementEntryType.DEPOSIT;
-}
-
-export function toTransactionType(type: StatementEntryType): TransactionType {
-  return type === StatementEntryType.TRANSFER
-    ? TransactionType.TRANSFER
-    : TransactionType.DEPOSIT;
-}
-
-export function formatStatementEntryTypeLabel(type: StatementEntryType) {
-  return type === StatementEntryType.DEPOSIT ? "Depósito" : "Transferência";
+export function formatTransactionTypeLabel(type: TransactionType) {
+  return type === TransactionType.DEPOSIT ? "Depósito" : "Transferência";
 }

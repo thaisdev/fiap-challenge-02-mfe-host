@@ -1,12 +1,11 @@
-import { StatementEntryType } from '../dashboard/_components/interfaces/statement-panel.interfaces';
-import type { AuthenticatedMockUser } from '../home/_services/auth-service';
+import type { AuthenticatedUser } from '../home/_services/auth-service';
 
 export const AUTH_SESSION_STORAGE_KEY = 'mcintosh-bank:auth-session';
 export const AUTH_SESSION_CHANGED_EVENT = 'mcintosh-bank:auth-session-changed';
 
 export type AuthSession = {
   token: string;
-  user: AuthenticatedMockUser;
+  user: AuthenticatedUser;
 };
 
 type UnknownRecord = Record<string, unknown>;
@@ -15,125 +14,15 @@ function isRecord(value: unknown): value is UnknownRecord {
   return !!value && typeof value === 'object';
 }
 
-function parseCurrencyStringToCents(value: string): number | null {
-  const normalized = value
-    .trim()
-    .replace(/\s/g, '')
-    .replace('R$', '')
-    .replace(/\./g, '')
-    .replace(',', '.');
-  const numericValue = Number(normalized);
-
-  if (!Number.isFinite(numericValue)) {
-    return null;
-  }
-
-  return Math.round(numericValue * 100);
-}
-
-function normalizeStatementEntry(
-  value: unknown
-): AuthenticatedMockUser['statementEntries'][number] | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-
-  const amountInCents =
-    typeof value.amountInCents === 'number'
-      ? value.amountInCents
-      : typeof value.value === 'string'
-        ? parseCurrencyStringToCents(value.value)
-        : null;
-
-  if (
-    typeof value.id !== 'string' ||
-    typeof value.month !== 'string' ||
-    typeof value.type !== 'string' ||
-    typeof value.date !== 'string' ||
-    amountInCents === null
-  ) {
-    return null;
-  }
-
-  return {
-    id: value.id,
-    month: value.month,
-    type: value.type as StatementEntryType,
-    amountInCents,
-    date: value.date,
-  };
-}
-
-function createFallbackStatementEntry(
-  index: number
-): AuthenticatedMockUser['statementEntries'][number] {
-  const date = new Date();
-  date.setHours(12, 0, 0, 0);
-  date.setDate(date.getDate() - (index * 3 + 2));
-
-  const monthLabel = new Intl.DateTimeFormat('pt-BR', {
-    month: 'long',
-    timeZone: 'America/Sao_Paulo',
-  }).format(date);
-
-  const dateLabel = new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    timeZone: 'America/Sao_Paulo',
-  }).format(date);
-
-  const isTransfer = index % 2 === 1;
-
-  return {
-    id: `fallback-session-entry-${index}-${dateLabel.replace(/\//g, '-')}`,
-    month: `${monthLabel.charAt(0).toUpperCase()}${monthLabel.slice(1)}`,
-    type: isTransfer ? StatementEntryType.TRANSFER : StatementEntryType.DEPOSIT,
-    amountInCents: isTransfer ? -(3500 + index * 300) : 6500 + index * 500,
-    date: dateLabel,
-  };
-}
-
-function ensureMinimumStatementEntries(
-  entries: AuthenticatedMockUser['statementEntries'],
-  minimumEntries: number = 8
-) {
-  if (entries.length >= minimumEntries) {
-    return entries;
-  }
-
-  const missingEntriesCount = minimumEntries - entries.length;
-  const fallbackEntries = Array.from({ length: missingEntriesCount }, (_, index) =>
-    createFallbackStatementEntry(index)
-  );
-
-  return [...entries, ...fallbackEntries];
-}
-
 export function normalizeAuthSession(value: unknown): AuthSession | null {
   if (!isRecord(value) || typeof value.token !== 'string' || !isRecord(value.user)) {
     return null;
   }
 
-  const accountBalanceInCents =
-    typeof value.user.accountBalanceInCents === 'number'
-      ? value.user.accountBalanceInCents
-      : typeof value.user.accountBalance === 'string'
-        ? parseCurrencyStringToCents(value.user.accountBalance)
-        : null;
-
-  const rawEntries = Array.isArray(value.user.statementEntries) ? value.user.statementEntries : [];
-  const normalizedEntries = rawEntries
-    .map(normalizeStatementEntry)
-    .filter((entry): entry is AuthenticatedMockUser['statementEntries'][number] => entry !== null);
-  const statementEntries = ensureMinimumStatementEntries(normalizedEntries);
-
   if (
-    typeof value.user.id !== 'string' ||
+    typeof value.user.id !== 'number' ||
     typeof value.user.name !== 'string' ||
-    typeof value.user.email !== 'string' ||
-    typeof value.user.createdAt !== 'string' ||
-    accountBalanceInCents === null
+    typeof value.user.email !== 'string'
   ) {
     return null;
   }
@@ -144,9 +33,6 @@ export function normalizeAuthSession(value: unknown): AuthSession | null {
       id: value.user.id,
       name: value.user.name,
       email: value.user.email,
-      createdAt: value.user.createdAt,
-      accountBalanceInCents,
-      statementEntries,
     },
   };
 }

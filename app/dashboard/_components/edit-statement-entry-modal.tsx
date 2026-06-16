@@ -7,62 +7,40 @@ import { CalendarInput } from '@/components/ui/calendar-input';
 import { Input, Select } from '@/components/ui/input';
 import { formatCurrencyInput } from '../_utils/currency-mask';
 import {
+  dateOnlyFromTransactionDate,
   getDefaultTransactionDate,
   getTransactionDateRange,
   isTransactionDateWithinRange,
 } from '../_utils/transaction-date';
 import type {
-  EditStatementEntryPayload,
-  EditStatementEntryResult,
-  StatementEntry,
+  EditTransactionPayload,
+  EditTransactionResult,
+  Transaction,
 } from './interfaces/statement-panel.interfaces';
-import { TransactionType, toTransactionType } from './interfaces/statement-panel.interfaces';
-import { AuthStatementEntry } from '@/app/home/_services/auth-service';
+import { TransactionType } from './interfaces/statement-panel.interfaces';
 
 type EditStatementEntryModalProps = {
-  entry: AuthStatementEntry;
+  entry: Transaction;
   onClose: () => void;
-  onSubmit?: (payload: EditStatementEntryPayload) => EditStatementEntryResult | void;
+  onSubmit?: (payload: EditTransactionPayload) => Promise<EditTransactionResult> | EditTransactionResult | void;
 };
 
-function parseCurrencyInputToCents(value: string) {
-  const normalizedAmount = value.replace(/\./g, '').replace(',', '.');
-  const amountValue = Number(normalizedAmount);
+function parseCurrencyInputToValue(value: string) {
+  const normalizedValue = value.replace(/\./g, '').replace(',', '.');
+  const numericValue = Number(normalizedValue);
 
-  if (!Number.isFinite(amountValue) || amountValue <= 0) {
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
     return 0;
   }
 
-  return Math.round(amountValue * 100);
+  return Math.round(numericValue * 100) / 100;
 }
 
-function formatCentsToInputValue(amountInCents: number) {
-  const absoluteAmount = Math.abs(amountInCents);
-  const integerPart = Math.floor(absoluteAmount / 100)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  const decimalPart = (absoluteAmount % 100).toString().padStart(2, '0');
-  return `${integerPart},${decimalPart}`;
-}
-
-function parsePtBrDateToIso(date: string) {
-  const [day, month, year] = date.split('/');
-  if (!day || !month || !year) {
-    return null;
-  }
-
-  const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-  const parsed = new Date(`${isoDate}T00:00:00`);
-
-  if (Number.isNaN(parsed.getTime())) {
-    return null;
-  }
-
-  return isoDate;
-}
-
-function normalizeEntryType(type: StatementEntry['type']): TransactionType {
-  return toTransactionType(type);
+function formatValueToInputValue(value: number) {
+  const absoluteValue = Math.abs(value);
+  const [integerPart, decimalPart] = absoluteValue.toFixed(2).split('.');
+  const normalizedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return `${normalizedInteger},${decimalPart}`;
 }
 
 export function EditStatementEntryModal({
@@ -71,28 +49,27 @@ export function EditStatementEntryModal({
   onSubmit,
 }: EditStatementEntryModalProps) {
   const calendarRange = useMemo(() => getTransactionDateRange(), []);
-  const [transactionType, setTransactionType] = useState<TransactionType>(() =>
-    normalizeEntryType(entry.type)
-  );
+  const [transactionType, setTransactionType] = useState<TransactionType>(entry.type);
   const [transactionAmount, setTransactionAmount] = useState(() =>
-    formatCentsToInputValue(entry.amountInCents)
+    formatValueToInputValue(entry.value)
   );
   const [transactionDate, setTransactionDate] = useState(
-    () => parsePtBrDateToIso(entry.date) ?? getDefaultTransactionDate()
+    () => dateOnlyFromTransactionDate(entry.date) ?? getDefaultTransactionDate()
   );
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
     { value: TransactionType.DEPOSIT, label: 'Depósito' },
     { value: TransactionType.TRANSFER, label: 'Transferência' },
   ];
 
-  const amountInCents = useMemo(
-    () => parseCurrencyInputToCents(transactionAmount),
+  const value = useMemo(
+    () => parseCurrencyInputToValue(transactionAmount),
     [transactionAmount]
   );
-  const isAmountValid = amountInCents > 0;
+  const isAmountValid = value > 0;
   const isDateValid = isTransactionDateWithinRange(transactionDate, calendarRange);
-  const isFormValid = isAmountValid && isDateValid;
+  const isFormValid = isAmountValid && isDateValid && !isSubmitting;
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -113,19 +90,27 @@ export function EditStatementEntryModal({
       return;
     }
 
-    const result = onSubmit?.({
-      entryId: entry.id,
-      type: transactionType,
-      amountInCents,
-      transactionDate,
-    });
+    setIsSubmitting(true);
 
-    if (result && !result.ok) {
-      setFeedback(result.message);
-      return;
-    }
+    Promise.resolve(
+      onSubmit?.({
+        transactionId: entry.id,
+        type: transactionType,
+        value,
+        transactionDate,
+      })
+    )
+      .then((result) => {
+        if (result && !result.ok) {
+          setFeedback(result.message);
+          return;
+        }
 
-    onClose();
+        onClose();
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   return (

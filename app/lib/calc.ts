@@ -8,7 +8,3 @@ export function formatCurrency(value: number): string {
     currency: "BRL",
   }).format(value);
 }
-
-export function formatCurrencyFromCents(valueInCents: number): string {
-  return formatCurrency(valueInCents / 100);
-}

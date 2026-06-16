@@ -1,18 +1,21 @@
-import { createEvent, fireEvent, render, screen } from '@testing-library/react';
+import { createEvent, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NewTransactionPanel } from './new-transaction-panel';
 import { TransactionType, type NewTransactionResult } from './interfaces/new-transaction-panel.interfaces';
 
 const onSubmitTransactionMock = vi.fn<
-  (payload: {
-    type: TransactionType;
-    amountInCents: number;
-    transactionDate: string;
-  }) => NewTransactionResult
+  [
+    payload: {
+      type: TransactionType;
+      value: number;
+      transactionDate: string;
+    },
+  ],
+  Promise<NewTransactionResult>
 >();
 
-vi.mock('@/app/context/auth-session-context', () => ({
-  useAuthSessionContext: () => ({
+vi.mock('../_state/account-context', () => ({
+  useAccountContext: () => ({
     onSubmitTransaction: onSubmitTransactionMock,
   }),
 }));
@@ -20,7 +23,7 @@ vi.mock('@/app/context/auth-session-context', () => ({
 describe('NewTransactionPanel', () => {
   beforeEach(() => {
     onSubmitTransactionMock.mockReset();
-    onSubmitTransactionMock.mockReturnValue({ ok: true });
+    onSubmitTransactionMock.mockResolvedValue({ ok: true });
   });
 
   it('renderiza estrutura base do formulario e comeca com botao desabilitado', () => {
@@ -76,7 +79,7 @@ describe('NewTransactionPanel', () => {
     expect(screen.getByText(/Informe uma data entre/i)).toBeInTheDocument();
   });
 
-  it('previne submit padrao do formulario', () => {
+  it('previne submit padrao do formulario', async () => {
     render(<NewTransactionPanel />);
 
     const submitButton = screen.getByRole('button', { name: 'Concluir transa\u00e7\u00e3o' });
@@ -95,6 +98,10 @@ describe('NewTransactionPanel', () => {
     fireEvent(form, submitEvent);
 
     expect(submitEvent.defaultPrevented).toBe(true);
+
+    await waitFor(() => {
+      expect(onSubmitTransactionMock).toHaveBeenCalled();
+    });
   });
 
   it('ignora submit quando tipo da transacao e invalido ou vazio', () => {
@@ -130,7 +137,7 @@ describe('NewTransactionPanel', () => {
     expect(typeSelect).toHaveValue(TransactionType.DEPOSIT);
   });
 
-  it('envia o valor em centavos e reseta o formulario no submit valido', () => {
+  it('envia o valor em reais e reseta o formulario no submit valido', async () => {
     render(<NewTransactionPanel />);
 
     const submitButton = screen.getByRole('button', { name: 'Concluir transa\u00e7\u00e3o' });
@@ -145,15 +152,18 @@ describe('NewTransactionPanel', () => {
 
     expect(onSubmitTransactionMock).toHaveBeenCalledWith({
       type: TransactionType.DEPOSIT,
-      amountInCents: 123456,
+      value: 1234.56,
       transactionDate: '2026-04-19',
     });
-    expect(typeSelect).toHaveValue('');
+
+    await waitFor(() => {
+      expect(typeSelect).toHaveValue('');
+    });
     expect(amountInput).toHaveValue('00,00');
   });
 
-  it('mostra alerta de erro e mantem os dados quando transacao e bloqueada', () => {
-    onSubmitTransactionMock.mockReturnValue({
+  it('mostra alerta de erro e mantem os dados quando transacao e bloqueada', async () => {
+    onSubmitTransactionMock.mockResolvedValue({
       ok: false,
       message: 'Saldo insuficiente para concluir a transfer\u00eancia.',
     });
@@ -168,9 +178,11 @@ describe('NewTransactionPanel', () => {
     fireEvent.change(amountInput, { target: { value: '300000' } });
     fireEvent.click(submitButton);
 
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Saldo insuficiente para concluir a transfer\u00eancia.'
-    );
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Saldo insuficiente para concluir a transfer\u00eancia.'
+      );
+    });
     expect(typeSelect).toHaveValue(TransactionType.TRANSFER);
     expect(amountInput).toHaveValue('3.000,00');
   });

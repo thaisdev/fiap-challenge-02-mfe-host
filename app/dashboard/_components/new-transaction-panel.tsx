@@ -14,40 +14,41 @@ import {
   isTransactionDateWithinRange,
 } from '../_utils/transaction-date';
 import { formatCurrencyInput } from '../_utils/currency-mask';
-import { useAuthSessionContext } from '@/app/context/auth-session-context';
+import { useAccountContext } from '../_state/account-context';
 
-function parseCurrencyInputToCents(value: string) {
-  const normalizedAmount = value.replace(/\./g, '').replace(',', '.');
-  const amountValue = Number(normalizedAmount);
+function parseCurrencyInputToValue(value: string) {
+  const normalizedValue = value.replace(/\./g, '').replace(',', '.');
+  const numericValue = Number(normalizedValue);
 
-  if (!Number.isFinite(amountValue) || amountValue <= 0) {
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
     return 0;
   }
 
-  return Math.round(amountValue * 100);
+  return Math.round(numericValue * 100) / 100;
 }
 
 export function NewTransactionPanel() {
-  const { onSubmitTransaction } = useAuthSessionContext()!;
+  const { onSubmitTransaction } = useAccountContext();
 
   const calendarRange = useMemo(() => getTransactionDateRange(), []);
   const [transactionType, setTransactionType] = useState<TransactionType | ''>('');
   const [transactionAmount, setTransactionAmount] = useState('00,00');
   const [transactionDate, setTransactionDate] = useState(() => getDefaultTransactionDate());
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
     { value: TransactionType.DEPOSIT, label: 'Depósito' },
     { value: TransactionType.TRANSFER, label: 'Transferência' },
   ];
 
-  const amountInCents = useMemo(
-    () => parseCurrencyInputToCents(transactionAmount),
+  const value = useMemo(
+    () => parseCurrencyInputToValue(transactionAmount),
     [transactionAmount]
   );
-  const isAmountValid = amountInCents > 0;
+  const isAmountValid = value > 0;
 
   const isDateValid = isTransactionDateWithinRange(transactionDate, calendarRange);
-  const isFormValid = transactionType !== '' && isAmountValid && isDateValid;
+  const isFormValid = transactionType !== '' && isAmountValid && isDateValid && !isSubmitting;
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
@@ -68,20 +69,26 @@ export function NewTransactionPanel() {
       return;
     }
 
-    const result = onSubmitTransaction({
+    setIsSubmitting(true);
+
+    onSubmitTransaction({
       type: transactionType,
-      amountInCents,
+      value,
       transactionDate,
-    });
+    })
+      .then((result) => {
+        if (result && !result.ok) {
+          setFeedback(result.message);
+          return;
+        }
 
-    if (result && !result.ok) {
-      setFeedback(result.message);
-      return;
-    }
-
-    setTransactionType('');
-    setTransactionAmount('00,00');
-    setTransactionDate(getDefaultTransactionDate());
+        setTransactionType('');
+        setTransactionAmount('00,00');
+        setTransactionDate(getDefaultTransactionDate());
+      })
+      .finally(() => {
+        setIsSubmitting(false);
+      });
   };
 
   return (

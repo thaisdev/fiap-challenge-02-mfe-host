@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input, validateInputValue } from '@/components/ui/input';
-import { registerMockAccount } from "../../_services/auth-service";
+import { registerAccount } from "../../_services/auth-service";
 
 type RegisterFormLayout = "page" | "modal";
 
@@ -52,7 +52,7 @@ export function RegisterForm({ layout = "page" }: RegisterFormProps) {
       password: String(formData.get("password") ?? ""),
     };
 
-    const result = await registerMockAccount(payload);
+    const result = await registerAccount(payload);
 
     if (result.ok) {
       formElement.reset();
