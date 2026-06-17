@@ -13,7 +13,7 @@ type ServiceMessageResponse = {
 };
 
 function accountTransactionsUrl(userId: number) {
-  return `${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/account/transactions`;
+  return `/api/users/${userId}/account/transactions`;
 }
 
 async function sendTransactionRequest(

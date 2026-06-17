@@ -45,7 +45,13 @@ Este repositório faz parte do **Tech Challenge** da pós-graduação em Fronten
 
 ### 2. Subindo a API
 
-A aplicação depende de uma API REST externa. Para rodá-la localmente:
+A aplicação depende de uma API REST externa. Você tem duas opções:
+
+**Opção A — Usar a API publicada (mais rápido)**
+
+A API já está disponível publicamente em **http://3.148.238.85:3333**. Basta configurar a variável de ambiente apontando para esse endereço (veja o passo 3).
+
+**Opção B — Rodar a API localmente**
 
 1. Clone o repositório da API:
 
@@ -59,10 +65,18 @@ A API ficará disponível em **http://localhost:3333**.
 
 ### 3. Variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto com o seguinte conteúdo (já aponta para a API local):
+Crie um arquivo `.env` na raiz do projeto com o conteúdo adequado à opção escolhida:
+
+- **API publicada:**
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3333
+API_URL=http://3.148.238.85:3333
+```
+
+- **API local:**
+
+```env
+API_URL=http://localhost:3333
 ```
 
 ### 4. Instalação das dependências
