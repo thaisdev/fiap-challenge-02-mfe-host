@@ -160,7 +160,7 @@ export async function fetchAccountByUserId(
   const fallbackErrorMessage = 'Nao foi possivel autenticar. Revise seus dados.';
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userId}/account`, {
+    const response = await fetch(`/api/users/${userId}/account`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -200,7 +200,7 @@ export async function fetchAccountByUserId(
 }
 
 export async function registerAccount(payload: RegisterAccountPayload) {
-  const result = await postJson(`${process.env.NEXT_PUBLIC_API_URL}/users`, payload, {
+  const result = await postJson(`/api/users`, payload, {
     fallbackSuccessMessage: 'Usuario criado com sucesso.',
     fallbackErrorMessage: 'Nao foi possivel criar a conta. Tente novamente.',
   });
@@ -212,7 +212,7 @@ export async function registerAccount(payload: RegisterAccountPayload) {
 }
 
 export async function loginAccount(payload: LoginAccountPayload) {
-  const result = await postJson(`${process.env.NEXT_PUBLIC_API_URL}/login`, payload, {
+  const result = await postJson(`/api/login`, payload, {
     fallbackSuccessMessage: 'Login realizado com sucesso.',
     fallbackErrorMessage: 'Nao foi possivel autenticar. Revise seus dados.',
   });

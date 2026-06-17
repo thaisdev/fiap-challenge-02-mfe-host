@@ -23,7 +23,7 @@ describe('transaction-service', () => {
       const result = await addTransaction(969, 'token-123', payload);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:3333/users/969/account/transactions',
+        '/api/users/969/account/transactions',
         {
           method: 'POST',
           headers: {
@@ -84,7 +84,7 @@ describe('transaction-service', () => {
       const result = await updateTransaction(969, 'token-123', 789, payload);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:3333/users/969/account/transactions/789',
+        '/api/users/969/account/transactions/789',
         {
           method: 'PUT',
           headers: {
@@ -118,7 +118,7 @@ describe('transaction-service', () => {
       const result = await deleteTransaction(969, 'token-123', 789);
 
       expect(fetchMock).toHaveBeenCalledWith(
-        'http://localhost:3333/users/969/account/transactions/789',
+        '/api/users/969/account/transactions/789',
         {
           method: 'DELETE',
           headers: {
