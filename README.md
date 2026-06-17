@@ -70,13 +70,13 @@ Crie um arquivo `.env` na raiz do projeto com o conteúdo adequado à opção es
 - **API publicada:**
 
 ```env
-NEXT_PUBLIC_API_URL=http://3.148.238.85:3333
+API_URL=http://3.148.238.85:3333
 ```
 
 - **API local:**
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3333
+API_URL=http://localhost:3333
 ```
 
 ### 4. Instalação das dependências
