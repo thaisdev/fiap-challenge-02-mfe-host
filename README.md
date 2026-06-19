@@ -109,6 +109,42 @@ npm run test
 
 ---
 
+## Como rodar o projeto com Docker
+
+### Pré-requisitos
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e em execução
+
+### 1. Build da imagem
+
+Na raiz do projeto, execute:
+
+```bash
+docker build -t mcintosh-bank .
+```
+
+### 2. Subindo o container
+
+Escolha a opção de acordo com onde a API está rodando:
+
+**API publicada:**
+
+```bash
+docker run -e API_URL=http://3.148.238.85:3333 -p 3000:3000 mcintosh-bank
+```
+
+**API rodando localmente:**
+
+```bash
+docker run -e API_URL=http://host.docker.internal:3333 -p 3000:3000 mcintosh-bank
+```
+
+> `host.docker.internal` é o hostname especial do Docker Desktop que aponta para a máquina host. Não use `localhost` dentro do container, pois ele se refere ao próprio container.
+
+Acesse: http://localhost:3000
+
+---
+
 ## Observações
 
 - O projeto utiliza **TypeScript** em modo estrito e segue padrões de organização e colocation recomendados para projetos Next.js modernos.
