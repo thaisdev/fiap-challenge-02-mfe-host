@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { CalendarInput } from '@/components/ui/calendar-input';
+import { FileInput } from '@/components/ui/file-input';
 import { Input, Select } from '@/components/ui/input';
 import { TransactionType } from './interfaces/new-transaction-panel.interfaces';
 import {
@@ -34,6 +35,7 @@ export function NewTransactionPanel() {
   const [transactionType, setTransactionType] = useState<TransactionType | ''>('');
   const [transactionAmount, setTransactionAmount] = useState('00,00');
   const [transactionDate, setTransactionDate] = useState(() => getDefaultTransactionDate());
+  const [fileInputKey, setFileInputKey] = useState(0);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
@@ -41,10 +43,7 @@ export function NewTransactionPanel() {
     { value: TransactionType.TRANSFER, label: 'Transferência' },
   ];
 
-  const value = useMemo(
-    () => parseCurrencyInputToValue(transactionAmount),
-    [transactionAmount]
-  );
+  const value = useMemo(() => parseCurrencyInputToValue(transactionAmount), [transactionAmount]);
   const isAmountValid = value > 0;
 
   const isDateValid = isTransactionDateWithinRange(transactionDate, calendarRange);
@@ -85,6 +84,7 @@ export function NewTransactionPanel() {
         setTransactionType('');
         setTransactionAmount('00,00');
         setTransactionDate(getDefaultTransactionDate());
+        setFileInputKey((k) => k + 1);
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -195,6 +195,17 @@ export function NewTransactionPanel() {
             containerClassName="mt-8 max-w-[296px]"
             labelClassName="mb-3 text-title-xl font-bold text-transaction-text"
             inputClassName="h-14 border-primary bg-surface text-center text-title-lg text-body focus-visible:ring-primary"
+          />
+
+          <FileInput
+            key={fileInputKey}
+            label="Comprovante"
+            id="transaction-file"
+            name="transaction-file"
+            accept="image/*,.pdf"
+            containerClassName="mt-8 max-w-74"
+            labelClassName="mb-3 text-title-xl font-bold text-transaction-text"
+            inputClassName="border-primary"
           />
 
           <div
