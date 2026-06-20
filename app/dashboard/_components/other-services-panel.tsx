@@ -1,5 +1,4 @@
 ﻿'use client';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { ServiceUnderConstructionModal } from './service-under-construction-modal';
 
@@ -16,29 +15,18 @@ const serviceOptions: readonly ServiceOption[] = [
   { id: 'insurance', label: 'Seguros' },
   { id: 'mobile-top-up', label: 'Crédito celular' },
 ];
-const readyServices = ['loan', 'my-cards', 'instant-payments'];
+const readyServices = ['my-cards'];
 
 export function OtherServicesPanel() {
-  const [selectedServiceLabel, setSelectedServiceLabel] = useState<string | null>(null);
-
-  const [activeService, setActiveService] = useState<string | null>(null);
-
-  const router = useRouter();
+  const [activeService, setActiveService] = useState<ServiceOption | null>(null);
 
   const handleServiceClick = (option: ServiceOption) => {
-    if (option.id === 'my-cards') {
-      setActiveService('my-cards');
-    } else if (readyServices.includes(option.id)) {
-      // Aqui você pode futuramente mostrar outras telas
-      setActiveService(option.id);
-    } else {
-      setSelectedServiceLabel(option.label);
-    }
+    setActiveService(option);
   };
 
   return (
     <section className="relative cursor-pointer overflow-hidden rounded-md p-5" aria-live="polite">
-      {activeService === 'my-cards' ? (
+      {activeService?.id === 'my-cards' ? (
         <div className="bg-[#cbcbcb] rounded-2xl p-10">
           {/* Aqui entra a tela de Meus Cartões */}
           <h2 className="text-2xl font-bold text-black">Meus Cartões</h2>
@@ -53,7 +41,7 @@ export function OtherServicesPanel() {
           {/* Container do cartão + botões */}
           <div className="flex items-start gap-6 mt-6">
             {/* Cartão */}
-            <div className="bg-[#004d61] rounded-2xl w-[350px] p-4 shadow-md" style={{ backgroundImage: "url('/dashboard/transactions/square-card.svg')" }}>
+            <div className="bg-[#004d61] rounded-2xl w-[350px] p-4 shadow-md">
               <p className="text-2xl text-white">Byte</p>
               <p className="text-body-md tracking-[0.05em] text-white">Platinum</p>
               <p className="text-body-md mt-8 text-white">Joana Fonseca Gomes</p>
@@ -134,10 +122,10 @@ export function OtherServicesPanel() {
         </div>
       )}
 
-      {selectedServiceLabel && (
+      {activeService && !readyServices.includes(activeService.id) && (
         <ServiceUnderConstructionModal
-          serviceLabel={selectedServiceLabel}
-          onClose={() => setSelectedServiceLabel(null)}
+          serviceLabel={activeService.label}
+          onClose={() => setActiveService(null)}
         />
       )}
     </section>
