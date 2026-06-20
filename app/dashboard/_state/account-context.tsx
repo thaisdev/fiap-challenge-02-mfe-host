@@ -184,6 +184,7 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
     type,
     value,
     transactionDate,
+    receiptFile,
   }: EditTransactionPayload): Promise<NewTransactionResult> => {
     const transactionToEdit = accountState.transactions.find(
       (transaction) => transaction.id === transactionId
@@ -222,6 +223,7 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
       type,
       value: Math.abs(value),
       date: isoDate,
+      receiptFile,
     });
 
     if (!result.ok) {

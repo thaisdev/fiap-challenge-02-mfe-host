@@ -169,12 +169,10 @@ export function StatementPanel({
               {transaction.receiptFile ? (
                 <div className="mt-1.5 flex items-center gap-2">
                   <span
-                    className="text-body-xs text-subtle"
+                    className="min-w-0 flex-1 truncate text-body-xs text-subtle"
                     title={transaction.receiptFile.filename}
                   >
-                    {transaction.receiptFile.filename.length > 20
-                      ? `${transaction.receiptFile.filename.slice(0, 20)}…`
-                      : transaction.receiptFile.filename}
+                    {transaction.receiptFile.filename}
                   </span>
                   <a
                     href={transaction.receiptFile.url}

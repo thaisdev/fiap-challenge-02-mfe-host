@@ -21,6 +21,7 @@ export type EditTransactionPayload = {
   type: TransactionType;
   value: number;
   transactionDate: string;
+  receiptFile?: ReceiptFile | null;
 };
 
 export type EditTransactionResult = NewTransactionResult;
