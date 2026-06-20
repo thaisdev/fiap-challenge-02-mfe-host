@@ -120,7 +120,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
               />
             </div>
 
-            <div className="space-y-6 desktop:col-start-2 desktop:min-w-0 desktop:space-y-3">
+            <div className="min-w-0 space-y-6 desktop:col-start-2 desktop:space-y-3">
               <AccountSummaryCard
                 name={userFirstName}
                 dateLabel={currentDateLabel}
