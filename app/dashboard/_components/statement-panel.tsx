@@ -166,6 +166,36 @@ export function StatementPanel({
               <p className="text-title-lg font-semibold text-black">
                 {formatCurrency(transaction.value)}
               </p>
+              {transaction.receiptFile ? (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span
+                    className="text-body-xs text-subtle"
+                    title={transaction.receiptFile.filename}
+                  >
+                    {transaction.receiptFile.filename.length > 20
+                      ? `${transaction.receiptFile.filename.slice(0, 20)}…`
+                      : transaction.receiptFile.filename}
+                  </span>
+                  <a
+                    href={transaction.receiptFile.url}
+                    download={transaction.receiptFile.filename}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`Baixar comprovante ${transaction.receiptFile.filename}`}
+                    className="inline-flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-sm text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+                      <path
+                        d="M12 3v12m0 0l-4-4m4 4l4-4M3 19h18"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              ) : null}
             </li>
           ))}
         </ul>
