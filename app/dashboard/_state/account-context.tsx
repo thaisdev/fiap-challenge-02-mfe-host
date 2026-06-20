@@ -142,6 +142,29 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
   };
 
   const onDeleteTransaction = async (transactionId: number): Promise<NewTransactionResult> => {
+    const transactionToDelete = accountState.transactions.find(
+      (transaction) => transaction.id === transactionId
+    );
+    if (!transactionToDelete) {
+      return {
+        ok: false,
+        message: 'Lançamento não encontrado para exclusão.',
+      };
+    }
+
+    const signedValue =
+      transactionToDelete.type === TransactionType.TRANSFER
+        ? -transactionToDelete.value
+        : transactionToDelete.value;
+    const projectedBalance = accountState.balance - signedValue;
+
+    if (projectedBalance < 0) {
+      return {
+        ok: false,
+        message: 'Não é possível excluir este lançamento pois resultaria em saldo negativo.',
+      };
+    }
+
     const result = await deleteTransaction(userId, token, transactionId);
 
     if (!result.ok) {
@@ -187,7 +210,7 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
     if (projectedBalance < 0) {
       return {
         ok: false,
-        message: 'Saldo insuficiente para concluir a transferência.',
+        message: 'Saldo insuficiente para concluir esta operação.',
       };
     }
 
