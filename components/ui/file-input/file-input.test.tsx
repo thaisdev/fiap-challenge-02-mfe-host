@@ -64,6 +64,33 @@ describe('FileInput', () => {
     expect(screen.queryByText(/\.pdf|\.png|\.jpg/i)).not.toBeInTheDocument();
   });
 
+  it('exibe botao de remover arquivo somente apos selecao', () => {
+    render(<FileInput label="Comprovante" name="comprovante" />);
+
+    expect(screen.queryByRole('button', { name: /remover arquivo/i })).not.toBeInTheDocument();
+
+    const input = screen.getByLabelText('Comprovante');
+    const file = new File(['conteudo'], 'recibo.pdf', { type: 'application/pdf' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+
+    expect(screen.getByRole('button', { name: /remover arquivo/i })).toBeInTheDocument();
+  });
+
+  it('limpa o nome do arquivo ao clicar em remover', () => {
+    render(<FileInput label="Comprovante" name="comprovante" />);
+
+    const input = screen.getByLabelText('Comprovante');
+    const file = new File(['conteudo'], 'recibo.pdf', { type: 'application/pdf' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+
+    fireEvent.click(screen.getByRole('button', { name: /remover arquivo/i }));
+
+    expect(screen.queryByText('recibo.pdf')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /remover arquivo/i })).not.toBeInTheDocument();
+  });
+
   it('repassa handler onChange externo', () => {
     const onChange = vi.fn();
     render(<FileInput label="Comprovante" name="comprovante" onChange={onChange} />);
