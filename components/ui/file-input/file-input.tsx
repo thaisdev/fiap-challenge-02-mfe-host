@@ -19,6 +19,7 @@ export function FileInput({
   labelClassName,
   inputClassName,
   onChange,
+  onClear,
   ...props
 }: FileInputProps) {
   const [fileName, setFileName] = useState<string | null>(null);
@@ -36,6 +37,7 @@ export function FileInput({
     if (inputRef.current) {
       inputRef.current.value = '';
     }
+    onClear?.();
   };
 
   return (

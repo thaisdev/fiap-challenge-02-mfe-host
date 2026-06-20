@@ -71,7 +71,9 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
   const { token } = session;
 
   const applyAccountResult = (
-    result: { ok: true; account: { balance: number; transactions: readonly Transaction[] } } | { ok: false; message: string }
+    result:
+      | { ok: true; account: { balance: number; transactions: readonly Transaction[] } }
+      | { ok: false; message: string }
   ) => {
     if (result.ok) {
       dispatchAccountAction({
@@ -113,6 +115,7 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
     type,
     value,
     transactionDate,
+    receiptFileUrl,
   }: NewTransactionPayload): Promise<NewTransactionResult> => {
     if (type === TransactionType.TRANSFER && value > accountState.balance) {
       return {
@@ -130,7 +133,7 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
     }
 
     const transaction = createTransaction({ type, value }, isoDate);
-    const result = await addTransaction(userId, token, transaction);
+    const result = await addTransaction(userId, token, { ...transaction, receiptFileUrl });
 
     if (!result.ok) {
       return result;

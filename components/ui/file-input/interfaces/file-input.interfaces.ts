@@ -9,4 +9,5 @@ export type FileInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type'>
   containerClassName?: string;
   labelClassName?: string;
   inputClassName?: string;
+  onClear?: () => void;
 };

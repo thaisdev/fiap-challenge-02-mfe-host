@@ -6,6 +6,7 @@ export type TransactionPayload = {
   type: TransactionType;
   date: string;
   value: number;
+  receiptFileUrl?: string | null;
 };
 
 type ServiceMessageResponse = {
@@ -74,5 +75,9 @@ export function updateTransaction(
 }
 
 export function deleteTransaction(userId: number, token: string, transactionId: number) {
-  return sendTransactionRequest(`${accountTransactionsUrl(userId)}/${transactionId}`, 'DELETE', token);
+  return sendTransactionRequest(
+    `${accountTransactionsUrl(userId)}/${transactionId}`,
+    'DELETE',
+    token
+  );
 }

@@ -1,8 +1,8 @@
 ﻿'use client';
 
-import type { FormEventHandler } from 'react';
+import type { ChangeEvent, FormEventHandler } from 'react';
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { CalendarInput } from '@/components/ui/calendar-input';
@@ -36,6 +36,7 @@ export function NewTransactionPanel() {
   const [transactionAmount, setTransactionAmount] = useState('00,00');
   const [transactionDate, setTransactionDate] = useState(() => getDefaultTransactionDate());
   const [fileInputKey, setFileInputKey] = useState(0);
+  const receiptFileUrlRef = useRef<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
@@ -74,6 +75,7 @@ export function NewTransactionPanel() {
       type: transactionType,
       value,
       transactionDate,
+      receiptFileUrl: receiptFileUrlRef.current,
     })
       .then((result) => {
         if (result && !result.ok) {
@@ -94,6 +96,25 @@ export function NewTransactionPanel() {
     setTransactionDate(getDefaultTransactionDate());
     setFileInputKey((k) => k + 1);
     setFeedback(null);
+    if (receiptFileUrlRef.current) {
+      URL.revokeObjectURL(receiptFileUrlRef.current);
+    }
+    receiptFileUrlRef.current = null;
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (receiptFileUrlRef.current) {
+      URL.revokeObjectURL(receiptFileUrlRef.current);
+    }
+    const file = event.currentTarget.files?.[0] ?? null;
+    receiptFileUrlRef.current = file ? URL.createObjectURL(file) : null;
+  };
+
+  const handleFileClear = () => {
+    if (receiptFileUrlRef.current) {
+      URL.revokeObjectURL(receiptFileUrlRef.current);
+    }
+    receiptFileUrlRef.current = null;
   };
 
   return (
@@ -211,6 +232,8 @@ export function NewTransactionPanel() {
             containerClassName="mt-8"
             labelClassName="mb-3 text-title-xl font-bold text-transaction-text"
             inputClassName="border-primary"
+            onChange={handleFileChange}
+            onClear={handleFileClear}
           />
 
           <div className="mt-10 flex flex-wrap gap-4 mobile:mt-8">
