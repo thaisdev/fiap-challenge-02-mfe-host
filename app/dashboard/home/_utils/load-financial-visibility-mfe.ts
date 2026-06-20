@@ -2,6 +2,10 @@ import { ensureEsModuleShims } from './es-module-shims';
 
 let financialVisibilityMfePromise: Promise<void> | null = null;
 
+const FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL =
+  process.env.NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL ??
+  'http://localhost:4201/remoteEntry.json';
+
 export function loadFinancialVisibilityMfe() {
   financialVisibilityMfePromise ??= (async () => {
     await ensureEsModuleShims();
@@ -17,7 +21,7 @@ export function loadFinancialVisibilityMfe() {
 
     const { loadRemoteModule } = await initFederation(
       {
-        financialVisibilityMfe: 'http://localhost:4201/remoteEntry.json',
+        financialVisibilityMfe: FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL,
       },
       {
         ...useShimImportMap({ shimMode: true }),
