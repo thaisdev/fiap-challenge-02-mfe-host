@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarInput } from '@/components/ui/calendar-input';
 import { FileInput } from '@/components/ui/file-input';
 import { Input, Select } from '@/components/ui/input';
-import { TransactionType } from './interfaces/new-transaction-panel.interfaces';
+import { ReceiptFile, TransactionType } from './interfaces/new-transaction-panel.interfaces';
 import {
   getDefaultTransactionDate,
   getTransactionDateRange,
@@ -36,7 +36,7 @@ export function NewTransactionPanel() {
   const [transactionAmount, setTransactionAmount] = useState('00,00');
   const [transactionDate, setTransactionDate] = useState(() => getDefaultTransactionDate());
   const [fileInputKey, setFileInputKey] = useState(0);
-  const receiptFileUrlRef = useRef<string | null>(null);
+  const receiptFileRef = useRef<ReceiptFile | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
@@ -75,7 +75,7 @@ export function NewTransactionPanel() {
       type: transactionType,
       value,
       transactionDate,
-      receiptFileUrl: receiptFileUrlRef.current,
+      receiptFile: receiptFileRef.current,
     })
       .then((result) => {
         if (result && !result.ok) {
@@ -96,25 +96,25 @@ export function NewTransactionPanel() {
     setTransactionDate(getDefaultTransactionDate());
     setFileInputKey((k) => k + 1);
     setFeedback(null);
-    if (receiptFileUrlRef.current) {
-      URL.revokeObjectURL(receiptFileUrlRef.current);
+    if (receiptFileRef.current) {
+      URL.revokeObjectURL(receiptFileRef.current.url);
     }
-    receiptFileUrlRef.current = null;
+    receiptFileRef.current = null;
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (receiptFileUrlRef.current) {
-      URL.revokeObjectURL(receiptFileUrlRef.current);
+    if (receiptFileRef.current) {
+      URL.revokeObjectURL(receiptFileRef.current.url);
     }
     const file = event.currentTarget.files?.[0] ?? null;
-    receiptFileUrlRef.current = file ? URL.createObjectURL(file) : null;
+    receiptFileRef.current = file ? { url: URL.createObjectURL(file), filename: file.name } : null;
   };
 
   const handleFileClear = () => {
-    if (receiptFileUrlRef.current) {
-      URL.revokeObjectURL(receiptFileUrlRef.current);
+    if (receiptFileRef.current) {
+      URL.revokeObjectURL(receiptFileRef.current.url);
     }
-    receiptFileUrlRef.current = null;
+    receiptFileRef.current = null;
   };
 
   return (

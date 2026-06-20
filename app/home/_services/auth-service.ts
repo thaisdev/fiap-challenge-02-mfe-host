@@ -1,3 +1,4 @@
+import { ReceiptFile } from '@/app/dashboard/_components/interfaces/new-transaction-panel.interfaces';
 import { TransactionType } from '@/app/dashboard/_components/interfaces/transaction.interfaces';
 
 type ServiceMessageResponse = {
@@ -16,6 +17,7 @@ export type AuthTransaction = {
   type: TransactionType;
   date: string;
   value: number;
+  receiptFile?: ReceiptFile | null;
 };
 
 export type AuthAccount = {
@@ -119,7 +121,8 @@ function isAuthTransaction(value: unknown): value is AuthTransaction {
 
   return (
     typeof transaction.id === 'number' &&
-    (transaction.type === TransactionType.DEPOSIT || transaction.type === TransactionType.TRANSFER) &&
+    (transaction.type === TransactionType.DEPOSIT ||
+      transaction.type === TransactionType.TRANSFER) &&
     typeof transaction.date === 'string' &&
     typeof transaction.value === 'number'
   );
@@ -147,9 +150,7 @@ function isLoginUser(value: unknown): value is LoginUser {
   const user = value as Record<string, unknown>;
 
   return (
-    typeof user.id === 'number' &&
-    typeof user.name === 'string' &&
-    typeof user.email === 'string'
+    typeof user.id === 'number' && typeof user.name === 'string' && typeof user.email === 'string'
   );
 }
 

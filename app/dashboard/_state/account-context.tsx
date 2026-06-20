@@ -115,7 +115,7 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
     type,
     value,
     transactionDate,
-    receiptFileUrl,
+    receiptFile,
   }: NewTransactionPayload): Promise<NewTransactionResult> => {
     if (type === TransactionType.TRANSFER && value > accountState.balance) {
       return {
@@ -133,7 +133,7 @@ export function AccountProvider({ session, children }: AccountProviderProps) {
     }
 
     const transaction = createTransaction({ type, value }, isoDate);
-    const result = await addTransaction(userId, token, { ...transaction, receiptFileUrl });
+    const result = await addTransaction(userId, token, { ...transaction, receiptFile });
 
     if (!result.ok) {
       return result;

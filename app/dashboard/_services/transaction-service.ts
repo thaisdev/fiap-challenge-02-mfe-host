@@ -1,4 +1,4 @@
-import type { NewTransactionResult } from '../_components/interfaces/new-transaction-panel.interfaces';
+import type { NewTransactionResult, ReceiptFile } from '../_components/interfaces/new-transaction-panel.interfaces';
 import type { TransactionType } from '../_components/interfaces/transaction.interfaces';
 
 export type TransactionPayload = {
@@ -6,7 +6,7 @@ export type TransactionPayload = {
   type: TransactionType;
   date: string;
   value: number;
-  receiptFileUrl?: string | null;
+  receiptFile?: ReceiptFile | null;
 };
 
 type ServiceMessageResponse = {
