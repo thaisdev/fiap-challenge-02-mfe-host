@@ -15,6 +15,7 @@ import {
   formatTransactionMonthLabel,
 } from '../_utils/transaction-date';
 import { useAccount, useAccountActions } from '../_store/account/account.hooks';
+import { deleteReceiptFile } from '../_services/blob-service';
 
 type StatementPanelProps = {
   title?: string;
@@ -76,9 +77,18 @@ export function StatementPanel({
     setDeleteFeedback(null);
     setEditingTransactionId(null);
 
+    const receiptUrl =
+      visibleTransactions.find((t) => t.id === activeSelectedTransactionId)?.receiptFile?.url ??
+      null;
+
     onDeleteTransaction(activeSelectedTransactionId).then((result) => {
       if (!result.ok) {
         setDeleteFeedback(result.message);
+        return;
+      }
+
+      if (receiptUrl) {
+        deleteReceiptFile(receiptUrl);
       }
     });
   };
@@ -177,14 +187,15 @@ export function StatementPanel({
                   </span>
                   <a
                     href={transaction.receiptFile.url}
-                    download={transaction.receiptFile.filename}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    aria-label={`Baixar comprovante ${transaction.receiptFile.filename}`}
+                    aria-label={`Abrir comprovante ${transaction.receiptFile.filename} em nova aba`}
                     className="inline-flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-sm text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   >
                     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
                       <path
-                        d="M12 3v12m0 0l-4-4m4 4l4-4M3 19h18"
+                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
                         stroke="currentColor"
                         strokeWidth="2"
                         strokeLinecap="round"

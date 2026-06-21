@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarInput } from '@/components/ui/calendar-input';
 import { FileInput } from '@/components/ui/file-input';
 import { Input, Select } from '@/components/ui/input';
-import { ReceiptFile, TransactionType } from './interfaces/new-transaction-panel.interfaces';
+import { TransactionType } from './interfaces/new-transaction-panel.interfaces';
 import {
   getDefaultTransactionDate,
   getTransactionDateRange,
@@ -16,6 +16,7 @@ import {
 } from '../_utils/transaction-date';
 import { formatCurrencyInput } from '../_utils/currency-mask';
 import { useAccountActions } from '../_store/account/account.hooks';
+import { deleteReceiptFile, uploadReceiptFile } from '../_services/blob-service';
 
 function parseCurrencyInputToValue(value: string) {
   const normalizedValue = value.replace(/\./g, '').replace(',', '.');
@@ -36,7 +37,7 @@ export function NewTransactionPanel() {
   const [transactionAmount, setTransactionAmount] = useState('00,00');
   const [transactionDate, setTransactionDate] = useState(() => getDefaultTransactionDate());
   const [fileInputKey, setFileInputKey] = useState(0);
-  const receiptFileRef = useRef<ReceiptFile | null>(null);
+  const receiptFileRef = useRef<File | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
@@ -71,19 +72,30 @@ export function NewTransactionPanel() {
 
     setIsSubmitting(true);
 
-    onSubmitTransaction({
-      type: transactionType,
-      value,
-      transactionDate,
-      receiptFile: receiptFileRef.current,
-    })
-      .then((result) => {
-        if (result && !result.ok) {
-          setFeedback(result.message);
-          return;
-        }
+    const file = receiptFileRef.current;
 
-        handleReset();
+    Promise.resolve(file ? uploadReceiptFile(file) : null)
+      .then((receiptFile) =>
+        onSubmitTransaction({
+          type: transactionType,
+          value,
+          transactionDate,
+          receiptFile,
+        }).then((result) => {
+          if (result && !result.ok) {
+            if (receiptFile) {
+              deleteReceiptFile(receiptFile.url);
+            }
+            setFeedback(result.message);
+            return;
+          }
+
+          handleReset();
+        })
+      )
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Erro ao enviar comprovante.';
+        setFeedback(message);
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -96,24 +108,14 @@ export function NewTransactionPanel() {
     setTransactionDate(getDefaultTransactionDate());
     setFileInputKey((k) => k + 1);
     setFeedback(null);
-    if (receiptFileRef.current) {
-      URL.revokeObjectURL(receiptFileRef.current.url);
-    }
     receiptFileRef.current = null;
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (receiptFileRef.current) {
-      URL.revokeObjectURL(receiptFileRef.current.url);
-    }
-    const file = event.currentTarget.files?.[0] ?? null;
-    receiptFileRef.current = file ? { url: URL.createObjectURL(file), filename: file.name } : null;
+    receiptFileRef.current = event.currentTarget.files?.[0] ?? null;
   };
 
   const handleFileClear = () => {
-    if (receiptFileRef.current) {
-      URL.revokeObjectURL(receiptFileRef.current.url);
-    }
     receiptFileRef.current = null;
   };
 

@@ -16,10 +16,10 @@ import {
 import type {
   EditTransactionPayload,
   EditTransactionResult,
-  ReceiptFile,
   Transaction,
 } from './interfaces/statement-panel.interfaces';
 import { TransactionType } from './interfaces/statement-panel.interfaces';
+import { deleteReceiptFile, uploadReceiptFile } from '../_services/blob-service';
 
 type EditStatementEntryModalProps = {
   entry: Transaction;
@@ -61,7 +61,7 @@ export function EditStatementEntryModal({
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExistingFileRemoved, setIsExistingFileRemoved] = useState(false);
-  const newReceiptFileRef = useRef<ReceiptFile | null>(null);
+  const newReceiptFileRef = useRef<File | null>(null);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
     { value: TransactionType.DEPOSIT, label: 'Depósito' },
     { value: TransactionType.TRANSFER, label: 'Transferência' },
@@ -87,19 +87,10 @@ export function EditStatementEntryModal({
   }, [onClose]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (newReceiptFileRef.current) {
-      URL.revokeObjectURL(newReceiptFileRef.current.url);
-    }
-    const file = event.currentTarget.files?.[0] ?? null;
-    newReceiptFileRef.current = file
-      ? { url: URL.createObjectURL(file), filename: file.name }
-      : null;
+    newReceiptFileRef.current = event.currentTarget.files?.[0] ?? null;
   };
 
   const handleFileClear = () => {
-    if (newReceiptFileRef.current) {
-      URL.revokeObjectURL(newReceiptFileRef.current.url);
-    }
     newReceiptFileRef.current = null;
   };
 
@@ -113,22 +104,40 @@ export function EditStatementEntryModal({
 
     setIsSubmitting(true);
 
-    Promise.resolve(
-      onSubmit?.({
-        transactionId: entry.id,
-        type: transactionType,
-        value,
-        transactionDate,
-        receiptFile: newReceiptFileRef.current ?? (isExistingFileRemoved ? null : (entry.receiptFile ?? null)),
-      })
-    )
-      .then((result) => {
-        if (result && !result.ok) {
-          setFeedback(result.message);
-          return;
-        }
+    const newFile = newReceiptFileRef.current;
+    const oldBlobUrl = entry.receiptFile?.url ?? null;
 
-        onClose();
+    Promise.resolve(newFile ? uploadReceiptFile(newFile) : null)
+      .then((uploadedFile) => {
+        const receiptFile = uploadedFile ?? (isExistingFileRemoved ? null : (entry.receiptFile ?? null));
+
+        return Promise.resolve(
+          onSubmit?.({
+            transactionId: entry.id,
+            type: transactionType,
+            value,
+            transactionDate,
+            receiptFile,
+          })
+        ).then((result) => {
+          if (result && !result.ok) {
+            if (uploadedFile) {
+              deleteReceiptFile(uploadedFile.url);
+            }
+            setFeedback(result.message);
+            return;
+          }
+
+          if (oldBlobUrl && (uploadedFile || isExistingFileRemoved)) {
+            deleteReceiptFile(oldBlobUrl);
+          }
+
+          onClose();
+        });
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Erro ao enviar comprovante.';
+        setFeedback(message);
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -229,13 +238,14 @@ export function EditStatementEntryModal({
                 </span>
                 <a
                   href={entry.receiptFile.url}
-                  download={entry.receiptFile.filename}
-                  aria-label={`Baixar comprovante ${entry.receiptFile.filename}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Abrir comprovante ${entry.receiptFile.filename} em nova aba`}
                   className="inline-flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-sm text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
                     <path
-                      d="M12 3v12m0 0l-4-4m4 4l4-4M3 19h18"
+                      d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
                       stroke="currentColor"
                       strokeWidth="2"
                       strokeLinecap="round"
