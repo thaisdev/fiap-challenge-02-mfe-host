@@ -154,6 +154,7 @@ describe('NewTransactionPanel', () => {
       type: TransactionType.DEPOSIT,
       value: 1234.56,
       transactionDate: '2026-04-19',
+      receiptFile: null,
     });
 
     await waitFor(() => {

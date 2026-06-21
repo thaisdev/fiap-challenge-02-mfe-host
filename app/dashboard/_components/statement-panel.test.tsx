@@ -127,6 +127,7 @@ describe('StatementPanel', () => {
       type: TransactionType.TRANSFER,
       value: 700,
       transactionDate: '2026-04-22',
+      receiptFile: null,
     });
 
     await waitFor(() => {
