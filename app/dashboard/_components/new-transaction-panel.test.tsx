@@ -150,11 +150,13 @@ describe('NewTransactionPanel', () => {
     fireEvent.change(dateInput, { target: { value: '2026-04-19' } });
     fireEvent.click(submitButton);
 
-    expect(onSubmitTransactionMock).toHaveBeenCalledWith({
-      type: TransactionType.DEPOSIT,
-      value: 1234.56,
-      transactionDate: '2026-04-19',
-      receiptFile: null,
+    await waitFor(() => {
+      expect(onSubmitTransactionMock).toHaveBeenCalledWith({
+        type: TransactionType.DEPOSIT,
+        value: 1234.56,
+        transactionDate: '2026-04-19',
+        receiptFile: null,
+      });
     });
 
     await waitFor(() => {
