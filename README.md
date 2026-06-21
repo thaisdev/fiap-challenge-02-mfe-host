@@ -65,19 +65,39 @@ A API ficará disponível em **http://localhost:3333**.
 
 ### 3. Variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto com o conteúdo adequado à opção escolhida:
+Copie o arquivo de exemplo e ajuste os valores:
 
-- **API publicada:**
-
-```env
-API_URL=http://3.148.238.85:3333
+```bash
+cp .env.example .env
 ```
 
-- **API local:**
+Abaixo a descrição de cada variável:
+
+**`API_URL`** — endereço da API REST.
+- API publicada: `http://3.148.238.85:3333`
+- API local: `http://localhost:3333`
+
+**`NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL`** — URL do microfrontend Angular de visibilidade financeira.
+
+Para rodar localmente, clone o repositório e siga as instruções do README dele:
+
+```bash
+git clone https://github.com/guiizis/angular-mfe-tech-challenge-2
+```
+
+Após iniciar, o microfrontend ficará disponível em `http://localhost:4201/remoteEntry.json`. Configure a variável com esse valor:
 
 ```env
-API_URL=http://localhost:3333
+NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL=http://localhost:4201/remoteEntry.json
 ```
+
+**`BLOB_READ_WRITE_TOKEN`** — token de acesso ao [Vercel Blob](https://vercel.com/docs/storage/vercel-blob).
+- Se preenchido, os comprovantes de transação serão enviados para o Vercel Blob.
+- Se deixado vazio, os arquivos serão salvos localmente na pasta `uploads/` (ignorada pelo git) e servidos via `/api/blob?file=<nome>`.
+
+**`UPLOADS_DIR`** — caminho absoluto da pasta de uploads locais.
+- Deixe vazio para usar o padrão (`uploads/` relativa ao diretório do processo).
+- Em Docker, já é configurado automaticamente via `ENV UPLOADS_DIR=/app/uploads` no Dockerfile.
 
 ### 4. Instalação das dependências
 
@@ -125,18 +145,38 @@ docker build -t mcintosh-bank .
 
 ### 2. Subindo o container
 
-Escolha a opção de acordo com onde a API está rodando:
+Escolha a opção de acordo com onde a API está rodando e como deseja armazenar os comprovantes.
 
-**API publicada:**
+**Com API publicada e Vercel Blob:**
 
 ```bash
-docker run -e API_URL=http://3.148.238.85:3333 -p 3000:3000 mcintosh-bank
+docker run \
+  -e API_URL=http://3.148.238.85:3333 \
+  -e BLOB_READ_WRITE_TOKEN=<seu_token> \
+  -p 3000:3000 \
+  mcintosh-bank
 ```
 
-**API rodando localmente:**
+**Com API publicada e armazenamento local (sem Vercel Blob):**
 
 ```bash
-docker run -e API_URL=http://host.docker.internal:3333 -p 3000:3000 mcintosh-bank
+docker run \
+  -e API_URL=http://3.148.238.85:3333 \
+  -v uploads:/app/uploads \
+  -p 3000:3000 \
+  mcintosh-bank
+```
+
+> O volume `-v uploads:/app/uploads` persiste os arquivos enviados entre reinicializações do container. Sem ele, os uploads serão perdidos ao recriar o container.
+
+**Com API rodando localmente:**
+
+```bash
+docker run \
+  -e API_URL=http://host.docker.internal:3333 \
+  -e BLOB_READ_WRITE_TOKEN=<seu_token> \
+  -p 3000:3000 \
+  mcintosh-bank
 ```
 
 > `host.docker.internal` é o hostname especial do Docker Desktop que aponta para a máquina host. Não use `localhost` dentro do container, pois ele se refere ao próprio container.

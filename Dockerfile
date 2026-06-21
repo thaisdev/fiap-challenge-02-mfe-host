@@ -19,11 +19,14 @@ FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV UPLOADS_DIR=/app/uploads
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
+
+RUN mkdir -p uploads && chown nextjs:nodejs uploads
 
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
