@@ -2,16 +2,21 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { loadFinancialVisibilityMfe } from '../_utils/load-financial-visibility-mfe';
+import { selectFinancialVisibilityData } from '../../_store/account/account.selectors';
+import { useAppSelector } from '../../_store/hooks';
+import type { McintoshFinancialVisibilityElement } from '@/types/custom-elements';
 
 type MfeStatus = 'loading' | 'ready' | 'error';
 
 export function FinancialVisibilityMfe() {
-  const elementRef = useRef<HTMLElement | null>(null);
+  const financialVisibilityData = useAppSelector(selectFinancialVisibilityData);
+  const financialVisibilityDataRef = useRef(financialVisibilityData);
+  const elementRef = useRef<McintoshFinancialVisibilityElement | null>(null);
   const [status, setStatus] = useState<MfeStatus>('loading');
 
   useEffect(() => {
     let active = true;
-    let element: HTMLElement | null = null;
+    let element: McintoshFinancialVisibilityElement | null = null;
 
     const onVisibilityItemSelected = (event: Event) => {
       console.log('Item selecionado no MFE Angular:', (event as CustomEvent).detail);
@@ -26,6 +31,9 @@ export function FinancialVisibilityMfe() {
         element = elementRef.current;
 
         element?.setAttribute('customer-id', '123');
+        if (element) {
+          element.financialVisibilityData = financialVisibilityDataRef.current;
+        }
         element?.addEventListener('visibilityItemSelected', onVisibilityItemSelected);
 
         setStatus('ready');
@@ -45,6 +53,16 @@ export function FinancialVisibilityMfe() {
       element?.removeEventListener('visibilityItemSelected', onVisibilityItemSelected);
     };
   }, []);
+
+  useEffect(() => {
+    financialVisibilityDataRef.current = financialVisibilityData;
+
+    if (!elementRef.current || status !== 'ready') {
+      return;
+    }
+
+    elementRef.current.financialVisibilityData = financialVisibilityData;
+  }, [financialVisibilityData, status]);
 
   if (status === 'error') {
     return (

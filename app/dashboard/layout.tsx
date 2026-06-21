@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthSessionProvider, useAuthSessionContext } from '@/app/context/auth-session-context';
 import { clearAuthSession } from '@/app/lib/auth-session';
-import { AccountProvider, useAccountContext } from './_state/account-context';
 import { AccountSummaryCard } from './_components/account-summary-card';
 import { DashboardHeader } from './_components/dashboard-header';
 import { Alert } from '@/components/ui/alert';
 import { getTimestampFromTransactionDate } from './_utils/transaction-date';
+import { DashboardStoreProvider } from './_store/redux-provider';
 import {
   DashboardSidebarItem,
   DashboardSidebarNav,
@@ -16,6 +16,7 @@ import {
 } from './_components/dashboard-sidebar-nav';
 import { StatementPanel } from './_components/statement-panel';
 import { ReactNode } from 'react';
+import { useAccount, useAccountActions } from './_store/account/account.hooks';
 
 const sidebarItems: readonly DashboardSidebarItem[] = [
   { key: 'home', label: 'Início', link: '/dashboard' },
@@ -52,12 +53,17 @@ function formatCurrentDateLabel() {
 
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { session } = useAuthSessionContext();
-  const { balance, transactions, errorMessage } = useAccountContext();
+  const { balance, transactions, request } = useAccount();
+  const { reloadAccount } = useAccountActions();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<DashboardTabKey>('home');
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [isErrorVisible, setIsErrorVisible] = useState(true);
   const currentDateLabel = useMemo(() => formatCurrentDateLabel(), []);
+
+  useEffect(() => {
+    void reloadAccount();
+  }, [reloadAccount]);
 
   const handleLogout = () => {
     clearAuthSession();
@@ -101,11 +107,11 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       <DashboardHeader userName={name} onLogout={handleLogout} />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-[688px] px-4 pb-10 pt-8 md:pb-10 md:pt-10 desktop:max-w-[1140px] desktop:px-0 desktop:pb-8 desktop:pt-4">
-          {errorMessage && isErrorVisible ? (
+          {request.errorMessage && isErrorVisible ? (
             <div className="pb-6">
               <Alert
                 variant="error"
-                message={errorMessage}
+                message={request.errorMessage}
                 onClose={() => setIsErrorVisible(false)}
               />
             </div>
@@ -157,17 +163,15 @@ function AuthGuard({ children }: { children: ReactNode }) {
     return null;
   }
 
-  return (
-    <AccountProvider session={session}>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </AccountProvider>
-  );
+  return <DashboardLayoutContent>{children}</DashboardLayoutContent>;
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthSessionProvider>
-      <AuthGuard>{children}</AuthGuard>
+      <DashboardStoreProvider>
+        <AuthGuard>{children}</AuthGuard>
+      </DashboardStoreProvider>
     </AuthSessionProvider>
   );
 }
