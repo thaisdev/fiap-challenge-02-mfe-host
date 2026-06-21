@@ -49,7 +49,7 @@ A aplicação depende de uma API REST externa. Você tem duas opções:
 
 **Opção A — Usar a API publicada (mais rápido)**
 
-A API já está disponível publicamente em **http://3.148.238.85:3333**. Basta configurar a variável de ambiente apontando para esse endereço (veja o passo 3).
+A API já está disponível publicamente em **http://3.131.169.219:3333**. Basta configurar a variável de ambiente apontando para esse endereço (veja o passo 3).
 
 **Opção B — Rodar a API localmente**
 
@@ -74,12 +74,23 @@ cp .env.example .env
 Abaixo a descrição de cada variável:
 
 **`API_URL`** — endereço da API REST.
-- API publicada: `http://3.148.238.85:3333`
+
+- API publicada: `http://3.131.169.219:3333`
 - API local: `http://localhost:3333`
 
 **`NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL`** — URL do microfrontend Angular de visibilidade financeira.
 
-Para rodar localmente, clone o repositório e siga as instruções do README dele:
+**Opção A — Usar o microfrontend publicado (mais rápido)**
+
+O microfrontend já está disponível publicamente. Configure a variável com a URL de produção:
+
+```env
+NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL=https://d102z2e77k7t5v.cloudfront.net/remoteEntry.json
+```
+
+**Opção B — Rodar o microfrontend localmente**
+
+Clone o repositório e siga as instruções do README dele:
 
 ```bash
 git clone https://github.com/guiizis/angular-mfe-tech-challenge-2
@@ -92,9 +103,9 @@ NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL=http://localhost:4201/remo
 ```
 
 **`BLOB_READ_WRITE_TOKEN`** — token de acesso ao [Vercel Blob](https://vercel.com/docs/storage/vercel-blob).
+
 - Se preenchido, os comprovantes de transação serão enviados para o Vercel Blob.
 - Se deixado vazio, os arquivos serão salvos localmente na pasta `uploads/` (ignorada pelo git) e servidos via `/api/blob?file=<nome>`.
-
 
 ### 4. Instalação das dependências
 
@@ -148,7 +159,7 @@ Escolha a opção de acordo com onde a API está rodando e como deseja armazenar
 
 ```bash
 docker run \
-  -e API_URL=http://3.148.238.85:3333 \
+  -e API_URL=http://3.131.169.219:3333 \
   -e BLOB_READ_WRITE_TOKEN=<seu_token> \
   -p 3000:3000 \
   mcintosh-bank
@@ -158,7 +169,7 @@ docker run \
 
 ```bash
 docker run \
-  -e API_URL=http://3.148.238.85:3333 \
+  -e API_URL=http://3.131.169.219:3333 \
   -v uploads:/app/uploads \
   -p 3000:3000 \
   mcintosh-bank
