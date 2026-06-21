@@ -4,14 +4,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AUTH_SESSION_STORAGE_KEY } from '@/app/lib/auth-session';
 import DashboardLayout from './layout';
 
-const { replaceMock, pushMock, useAuthSessionContextMock, useAccountContextMock } = vi.hoisted(
-  () => ({
+const { replaceMock, pushMock, useAuthSessionContextMock, useAccountMock, reloadAccountMock } =
+  vi.hoisted(() => ({
     replaceMock: vi.fn(),
     pushMock: vi.fn(),
     useAuthSessionContextMock: vi.fn(),
-    useAccountContextMock: vi.fn(),
-  })
-);
+    useAccountMock: vi.fn(),
+    reloadAccountMock: vi.fn(),
+  }));
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -25,26 +25,33 @@ vi.mock('@/app/context/auth-session-context', () => ({
   useAuthSessionContext: useAuthSessionContextMock,
 }));
 
-vi.mock('./_state/account-context', () => ({
-  AccountProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-  useAccountContext: useAccountContextMock,
+vi.mock('./_store/account/account.hooks', () => ({
+  useAccount: useAccountMock,
+  useAccountActions: () => ({
+    reloadAccount: reloadAccountMock,
+  }),
 }));
 
 function authenticatedSession(name = 'Joana da Silva Oliveira') {
   return {
     session: {
+      token: 'token-123',
       user: {
+        id: 969,
         name,
+        email: 'joana@mail.com',
       },
     },
     status: 'authenticated',
   };
 }
 
-function accountContext() {
+function accountState() {
   return {
-    status: 'ready',
-    errorMessage: null,
+    request: {
+      status: 'ready',
+      errorMessage: null,
+    },
     balance: 2500,
     transactions: [
       {
@@ -79,9 +86,11 @@ describe('DashboardLayout', () => {
   beforeEach(() => {
     replaceMock.mockClear();
     pushMock.mockClear();
+    reloadAccountMock.mockClear();
+    reloadAccountMock.mockResolvedValue(undefined);
     sessionStorage.clear();
     useAuthSessionContextMock.mockReturnValue(authenticatedSession());
-    useAccountContextMock.mockReturnValue(accountContext());
+    useAccountMock.mockReturnValue(accountState());
   });
 
   it('renderiza container da area de dashboard com children', () => {
@@ -115,10 +124,12 @@ describe('DashboardLayout', () => {
   });
 
   it('exibe alerta de erro quando a busca da conta falha', () => {
-    useAccountContextMock.mockReturnValue({
-      ...accountContext(),
-      status: 'error',
-      errorMessage: 'Token inválido ou expirado',
+    useAccountMock.mockReturnValue({
+      ...accountState(),
+      request: {
+        status: 'error',
+        errorMessage: 'Token invÃ¡lido ou expirado',
+      },
     });
 
     render(
@@ -127,7 +138,7 @@ describe('DashboardLayout', () => {
       </DashboardLayout>
     );
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Token inválido ou expirado');
+    expect(screen.getByRole('alert')).toHaveTextContent('Token invÃ¡lido ou expirado');
 
     fireEvent.click(screen.getByRole('button', { name: 'Fechar alerta' }));
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();

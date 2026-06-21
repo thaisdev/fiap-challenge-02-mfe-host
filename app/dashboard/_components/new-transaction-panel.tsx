@@ -15,7 +15,7 @@ import {
   isTransactionDateWithinRange,
 } from '../_utils/transaction-date';
 import { formatCurrencyInput } from '../_utils/currency-mask';
-import { useAccountContext } from '../_state/account-context';
+import { useAccountActions } from '../_store/account/account.hooks';
 
 function parseCurrencyInputToValue(value: string) {
   const normalizedValue = value.replace(/\./g, '').replace(',', '.');
@@ -29,7 +29,7 @@ function parseCurrencyInputToValue(value: string) {
 }
 
 export function NewTransactionPanel() {
-  const { onSubmitTransaction } = useAccountContext();
+  const { onSubmitTransaction } = useAccountActions();
 
   const calendarRange = useMemo(() => getTransactionDateRange(), []);
   const [transactionType, setTransactionType] = useState<TransactionType | ''>('');

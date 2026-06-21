@@ -6,9 +6,11 @@ import { TransactionType } from './interfaces/statement-panel.interfaces';
 const onDeleteTransactionMock = vi.fn();
 const onEditTransactionMock = vi.fn();
 
-vi.mock('../_state/account-context', () => ({
-  useAccountContext: () => ({
+vi.mock('../_store/account/account.hooks', () => ({
+  useAccount: () => ({
     transactions: [],
+  }),
+  useAccountActions: () => ({
     onDeleteTransaction: onDeleteTransactionMock,
     onEditTransaction: onEditTransactionMock,
   }),

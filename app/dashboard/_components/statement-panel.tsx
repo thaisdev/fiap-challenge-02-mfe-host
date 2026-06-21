@@ -14,7 +14,7 @@ import {
   formatTransactionDateLabel,
   formatTransactionMonthLabel,
 } from '../_utils/transaction-date';
-import { useAccountContext } from '../_state/account-context';
+import { useAccount, useAccountActions } from '../_store/account/account.hooks';
 
 type StatementPanelProps = {
   title?: string;
@@ -30,7 +30,8 @@ export function StatementPanel({
   showActions = true,
   entries = [],
 }: StatementPanelProps) {
-  const { transactions, onDeleteTransaction, onEditTransaction } = useAccountContext();
+  const { transactions } = useAccount();
+  const { onDeleteTransaction, onEditTransaction } = useAccountActions();
 
   const visibleTransactions = entries.length > 0 ? entries : transactions;
 

@@ -14,8 +14,8 @@ const onSubmitTransactionMock = vi.fn<
   Promise<NewTransactionResult>
 >();
 
-vi.mock('../_state/account-context', () => ({
-  useAccountContext: () => ({
+vi.mock('../_store/account/account.hooks', () => ({
+  useAccountActions: () => ({
     onSubmitTransaction: onSubmitTransactionMock,
   }),
 }));
