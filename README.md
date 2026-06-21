@@ -95,9 +95,6 @@ NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL=http://localhost:4201/remo
 - Se preenchido, os comprovantes de transação serão enviados para o Vercel Blob.
 - Se deixado vazio, os arquivos serão salvos localmente na pasta `uploads/` (ignorada pelo git) e servidos via `/api/blob?file=<nome>`.
 
-**`UPLOADS_DIR`** — caminho absoluto da pasta de uploads locais.
-- Deixe vazio para usar o padrão (`uploads/` relativa ao diretório do processo).
-- Em Docker, já é configurado automaticamente via `ENV UPLOADS_DIR=/app/uploads` no Dockerfile.
 
 ### 4. Instalação das dependências
 
