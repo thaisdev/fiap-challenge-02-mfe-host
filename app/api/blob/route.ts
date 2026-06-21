@@ -70,15 +70,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     return Response.json({ error: 'Arquivo não encontrado na requisição.' }, { status: 400 })
   }
 
+  const userId = formData.get('userId')
+  const safeName = file.name.replace(/[/\\:*?"<>|]/g, '_')
+  const userSegment = typeof userId === 'string' && userId ? `${userId}-` : ''
+  const uniqueName = `${Date.now()}-${userSegment}${safeName}`
+
   if (BLOB_TOKEN) {
-    const blob = await put(file.name, file, { access: 'public', token: BLOB_TOKEN })
+    const blob = await put(uniqueName, file, { access: 'public', token: BLOB_TOKEN })
     return Response.json({ url: blob.url, pathname: blob.pathname, filename: file.name })
   }
 
   const uploadsDir = getUploadsDir()
   await ensureUploadsDir(uploadsDir)
-  const safeName = file.name.replace(/[/\\:*?"<>|]/g, '_')
-  const uniqueName = `${Date.now()}-${safeName}`
   const buffer = Buffer.from(await file.arrayBuffer())
   await writeFile(join(uploadsDir, uniqueName), buffer)
   return Response.json({ url: `/api/blob?file=${encodeURIComponent(uniqueName)}`, filename: file.name })

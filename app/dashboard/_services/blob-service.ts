@@ -1,8 +1,9 @@
 import type { ReceiptFile } from '../_components/interfaces/new-transaction-panel.interfaces'
 
-export async function uploadReceiptFile(file: File): Promise<ReceiptFile> {
+export async function uploadReceiptFile(file: File, userId?: number | null): Promise<ReceiptFile> {
   const formData = new FormData()
   formData.append('file', file)
+  if (userId != null) formData.append('userId', String(userId))
 
   const response = await fetch('/api/blob', {
     method: 'POST',

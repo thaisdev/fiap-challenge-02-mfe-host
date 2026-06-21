@@ -30,7 +30,7 @@ function parseCurrencyInputToValue(value: string) {
 }
 
 export function NewTransactionPanel() {
-  const { onSubmitTransaction } = useAccountActions();
+  const { userId, onSubmitTransaction } = useAccountActions();
 
   const calendarRange = useMemo(() => getTransactionDateRange(), []);
   const [transactionType, setTransactionType] = useState<TransactionType | ''>('');
@@ -74,7 +74,7 @@ export function NewTransactionPanel() {
 
     const file = receiptFileRef.current;
 
-    Promise.resolve(file ? uploadReceiptFile(file) : null)
+    Promise.resolve(file ? uploadReceiptFile(file, userId) : null)
       .then((receiptFile) =>
         onSubmitTransaction({
           type: transactionType,

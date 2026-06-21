@@ -32,7 +32,7 @@ export function StatementPanel({
   entries = [],
 }: StatementPanelProps) {
   const { transactions } = useAccount();
-  const { onDeleteTransaction, onEditTransaction } = useAccountActions();
+  const { userId, onDeleteTransaction, onEditTransaction } = useAccountActions();
 
   const visibleTransactions = entries.length > 0 ? entries : transactions;
 
@@ -214,6 +214,7 @@ export function StatementPanel({
       {editingTransaction ? (
         <EditStatementEntryModal
           entry={editingTransaction}
+          userId={userId}
           onClose={() => setEditingTransactionId(null)}
           onSubmit={onEditTransaction}
         />

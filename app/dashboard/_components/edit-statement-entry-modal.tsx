@@ -23,6 +23,7 @@ import { deleteReceiptFile, uploadReceiptFile } from '../_services/blob-service'
 
 type EditStatementEntryModalProps = {
   entry: Transaction;
+  userId?: number | null;
   onClose: () => void;
   onSubmit?: (payload: EditTransactionPayload) => Promise<EditTransactionResult> | EditTransactionResult | void;
 };
@@ -47,6 +48,7 @@ function formatValueToInputValue(value: number) {
 
 export function EditStatementEntryModal({
   entry,
+  userId,
   onClose,
   onSubmit,
 }: EditStatementEntryModalProps) {
@@ -107,7 +109,7 @@ export function EditStatementEntryModal({
     const newFile = newReceiptFileRef.current;
     const oldBlobUrl = entry.receiptFile?.url ?? null;
 
-    Promise.resolve(newFile ? uploadReceiptFile(newFile) : null)
+    Promise.resolve(newFile ? uploadReceiptFile(newFile, userId) : null)
       .then((uploadedFile) => {
         const receiptFile = uploadedFile ?? (isExistingFileRemoved ? null : (entry.receiptFile ?? null));
 
