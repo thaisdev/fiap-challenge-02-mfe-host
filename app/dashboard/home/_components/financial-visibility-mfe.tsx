@@ -49,7 +49,7 @@ export function FinancialVisibilityMfe() {
   if (status === 'error') {
     return (
       <p className="text-body-sm text-error">
-        Não foi possível carregar o microfrontend.
+        Não foi possível carregar a visibilidade financeira.
       </p>
     );
   }
@@ -57,7 +57,7 @@ export function FinancialVisibilityMfe() {
   return (
     <>
       {status === 'loading' && (
-        <p className="text-body-sm text-subtle">Carregando microfrontend...</p>
+        <p className="text-body-sm text-subtle">Carregando visibilidade financeira...</p>
       )}
 
       <mcintosh-financial-visibility ref={elementRef} customer-id="123" />
