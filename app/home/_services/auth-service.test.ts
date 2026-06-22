@@ -8,7 +8,7 @@ describe('auth-service', () => {
   });
 
   describe('registerAccount', () => {
-    it('envia cadastro para http://localhost:3333/users e usa fallback de sucesso quando a API nao retorna mensagem', async () => {
+    it('envia cadastro para api/users e usa fallback de sucesso quando a API nao retorna mensagem', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({
@@ -25,7 +25,7 @@ describe('auth-service', () => {
         password: '123456',
       });
 
-      expect(fetchMock).toHaveBeenCalledWith('http://localhost:3333/users', {
+      expect(fetchMock).toHaveBeenCalledWith('/api/users', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -74,7 +74,7 @@ describe('auth-service', () => {
         password: '123456',
       });
 
-      expect(fetchMock).toHaveBeenCalledWith('http://localhost:3333/users', {
+      expect(fetchMock).toHaveBeenCalledWith('/api/users', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -132,7 +132,7 @@ describe('auth-service', () => {
       });
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
-      expect(fetchMock).toHaveBeenCalledWith('http://localhost:3333/login', {
+      expect(fetchMock).toHaveBeenCalledWith('/api/login', {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -232,7 +232,7 @@ describe('auth-service', () => {
 
       const result = await fetchAccountByUserId(969, 'mock-token-user-1');
 
-      expect(fetchMock).toHaveBeenCalledWith('http://localhost:3333/users/969/account', {
+      expect(fetchMock).toHaveBeenCalledWith('/api/users/969/account', {
         headers: {
           Authorization: 'Bearer mock-token-user-1',
         },

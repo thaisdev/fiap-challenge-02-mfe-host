@@ -1,11 +1,12 @@
 ﻿'use client';
 
-import type { FormEventHandler } from 'react';
+import type { ChangeEvent, FormEventHandler } from 'react';
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { CalendarInput } from '@/components/ui/calendar-input';
+import { FileInput } from '@/components/ui/file-input';
 import { Input, Select } from '@/components/ui/input';
 import { TransactionType } from './interfaces/new-transaction-panel.interfaces';
 import {
@@ -15,6 +16,7 @@ import {
 } from '../_utils/transaction-date';
 import { formatCurrencyInput } from '../_utils/currency-mask';
 import { useAccountActions } from '../_store/account/account.hooks';
+import { deleteReceiptFile, uploadReceiptFile } from '../_services/blob-service';
 
 function parseCurrencyInputToValue(value: string) {
   const normalizedValue = value.replace(/\./g, '').replace(',', '.');
@@ -28,12 +30,14 @@ function parseCurrencyInputToValue(value: string) {
 }
 
 export function NewTransactionPanel() {
-  const { onSubmitTransaction } = useAccountActions();
+  const { userId, onSubmitTransaction } = useAccountActions();
 
   const calendarRange = useMemo(() => getTransactionDateRange(), []);
   const [transactionType, setTransactionType] = useState<TransactionType | ''>('');
   const [transactionAmount, setTransactionAmount] = useState('00,00');
   const [transactionDate, setTransactionDate] = useState(() => getDefaultTransactionDate());
+  const [fileInputKey, setFileInputKey] = useState(0);
+  const receiptFileRef = useRef<File | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
@@ -41,10 +45,7 @@ export function NewTransactionPanel() {
     { value: TransactionType.TRANSFER, label: 'Transferência' },
   ];
 
-  const value = useMemo(
-    () => parseCurrencyInputToValue(transactionAmount),
-    [transactionAmount]
-  );
+  const value = useMemo(() => parseCurrencyInputToValue(transactionAmount), [transactionAmount]);
   const isAmountValid = value > 0;
 
   const isDateValid = isTransactionDateWithinRange(transactionDate, calendarRange);
@@ -71,24 +72,51 @@ export function NewTransactionPanel() {
 
     setIsSubmitting(true);
 
-    onSubmitTransaction({
-      type: transactionType,
-      value,
-      transactionDate,
-    })
-      .then((result) => {
-        if (result && !result.ok) {
-          setFeedback(result.message);
-          return;
-        }
+    const file = receiptFileRef.current;
 
-        setTransactionType('');
-        setTransactionAmount('00,00');
-        setTransactionDate(getDefaultTransactionDate());
+    Promise.resolve(file ? uploadReceiptFile(file, userId) : null)
+      .then((receiptFile) =>
+        onSubmitTransaction({
+          type: transactionType,
+          value,
+          transactionDate,
+          receiptFile,
+        }).then((result) => {
+          if (result && !result.ok) {
+            if (receiptFile) {
+              deleteReceiptFile(receiptFile.url);
+            }
+            setFeedback(result.message);
+            return;
+          }
+
+          handleReset();
+        })
+      )
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Erro ao enviar comprovante.';
+        setFeedback(message);
       })
       .finally(() => {
         setIsSubmitting(false);
       });
+  };
+
+  const handleReset = () => {
+    setTransactionType('');
+    setTransactionAmount('00,00');
+    setTransactionDate(getDefaultTransactionDate());
+    setFileInputKey((k) => k + 1);
+    setFeedback(null);
+    receiptFileRef.current = null;
+  };
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    receiptFileRef.current = event.currentTarget.files?.[0] ?? null;
+  };
+
+  const handleFileClear = () => {
+    receiptFileRef.current = null;
   };
 
   return (
@@ -138,7 +166,7 @@ export function NewTransactionPanel() {
         className="pointer-events-none absolute bottom-0 right-5 z-0 mobile:right-0 mobile:w-[270px] mobile:max-w-[68%] desktop:hidden"
       />
 
-      <div className="relative z-10 max-w-[420px]">
+      <div className="relative z-10 mx-auto max-w-106.25">
         <h2 className="text-[3rem] font-bold leading-none text-transaction-text">Nova transação</h2>
 
         <form className="mt-10 mobile:mt-8" onSubmit={handleSubmit} noValidate>
@@ -177,7 +205,7 @@ export function NewTransactionPanel() {
               setTransactionAmount(formatCurrencyInput(event.currentTarget.value))
             }
             required
-            containerClassName="mt-10 max-w-[296px] mobile:mt-8"
+            containerClassName="mt-10 mobile:mt-8"
             labelClassName="mb-3 text-title-xl font-bold text-transaction-text"
             inputClassName="h-14 border-primary bg-surface text-center text-title-lg text-body focus-visible:ring-primary"
             validationKind="none"
@@ -192,27 +220,48 @@ export function NewTransactionPanel() {
             required
             minDate={calendarRange.minDate}
             maxDate={calendarRange.maxDate}
-            containerClassName="mt-8 max-w-[296px]"
+            containerClassName="mt-8"
             labelClassName="mb-3 text-title-xl font-bold text-transaction-text"
             inputClassName="h-14 border-primary bg-surface text-center text-title-lg text-body focus-visible:ring-primary"
           />
 
-          <div
-            className={['mt-10 w-fit mobile:mt-8', !isFormValid ? 'cursor-not-allowed' : ''].join(
-              ' '
-            )}
-          >
+          <FileInput
+            key={fileInputKey}
+            label="Comprovante"
+            id="transaction-file"
+            name="transaction-file"
+            accept="image/*,.pdf"
+            containerClassName="mt-8"
+            labelClassName="mb-3 text-title-xl font-bold text-transaction-text"
+            inputClassName="border-primary"
+            onChange={handleFileChange}
+            onClear={handleFileClear}
+          />
+
+          <div className="mt-10 flex flex-wrap gap-4 mobile:mt-8">
+            <div className={!isFormValid ? 'cursor-not-allowed' : ''}>
+              <Button
+                type="submit"
+                variant="solid"
+                tone="primary"
+                className={[
+                  'h-14 text-title-xl font-bold',
+                  !isFormValid ? 'pointer-events-none' : '',
+                ].join(' ')}
+                disabled={!isFormValid}
+              >
+                Concluir transação
+              </Button>
+            </div>
             <Button
-              type="submit"
-              variant="solid"
+              type="button"
+              variant="outline"
               tone="primary"
-              className={[
-                'h-14 w-full max-w-[296px] text-title-xl font-bold',
-                !isFormValid ? 'pointer-events-none' : '',
-              ].join(' ')}
-              disabled={!isFormValid}
+              className="h-14 text-title-xl font-bold"
+              disabled={isSubmitting}
+              onClick={handleReset}
             >
-              Concluir transação
+              Cancelar
             </Button>
           </div>
 

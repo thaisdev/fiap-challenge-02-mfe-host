@@ -122,11 +122,14 @@ describe('StatementPanel', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Salvar edi/i }));
 
-    expect(onEditTransactionMock).toHaveBeenCalledWith({
-      transactionId: 1,
-      type: TransactionType.TRANSFER,
-      value: 700,
-      transactionDate: '2026-04-22',
+    await waitFor(() => {
+      expect(onEditTransactionMock).toHaveBeenCalledWith({
+        transactionId: 1,
+        type: TransactionType.TRANSFER,
+        value: 700,
+        transactionDate: '2026-04-22',
+        receiptFile: null,
+      });
     });
 
     await waitFor(() => {
@@ -146,21 +149,23 @@ describe('StatementPanel', () => {
           {
             id: 1,
             type: TransactionType.DEPOSIT,
-            date: '2022-11-18T12:00:00.000Z',
+            date: '2026-01-15T12:00:00.000Z',
             value: 150,
           },
         ]}
       />
     );
 
-    fireEvent.click(getEntryByDate('18/11/2022'));
+    fireEvent.click(getEntryByDate('15/01/2026'));
     fireEvent.click(screen.getByRole('button', { name: 'Editar extrato' }));
     fireEvent.change(screen.getByLabelText('Data'), {
       target: { value: '2026-04-21' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Salvar edi/i }));
 
-    expect(onEditTransactionMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(onEditTransactionMock).toHaveBeenCalledTimes(1);
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Saldo insuficiente');

@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState, type FormEventHandler } from 'react';
+import { type ChangeEvent, useEffect, useMemo, useRef, useState, type FormEventHandler } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { CalendarInput } from '@/components/ui/calendar-input';
+import { FileInput } from '@/components/ui/file-input';
 import { Input, Select } from '@/components/ui/input';
 import { formatCurrencyInput } from '../_utils/currency-mask';
 import {
@@ -18,9 +19,11 @@ import type {
   Transaction,
 } from './interfaces/statement-panel.interfaces';
 import { TransactionType } from './interfaces/statement-panel.interfaces';
+import { deleteReceiptFile, uploadReceiptFile } from '../_services/blob-service';
 
 type EditStatementEntryModalProps = {
   entry: Transaction;
+  userId?: number | null;
   onClose: () => void;
   onSubmit?: (payload: EditTransactionPayload) => Promise<EditTransactionResult> | EditTransactionResult | void;
 };
@@ -45,6 +48,7 @@ function formatValueToInputValue(value: number) {
 
 export function EditStatementEntryModal({
   entry,
+  userId,
   onClose,
   onSubmit,
 }: EditStatementEntryModalProps) {
@@ -58,6 +62,8 @@ export function EditStatementEntryModal({
   );
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExistingFileRemoved, setIsExistingFileRemoved] = useState(false);
+  const newReceiptFileRef = useRef<File | null>(null);
   const transactionOptions: readonly { value: TransactionType; label: string }[] = [
     { value: TransactionType.DEPOSIT, label: 'Depósito' },
     { value: TransactionType.TRANSFER, label: 'Transferência' },
@@ -82,6 +88,14 @@ export function EditStatementEntryModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    newReceiptFileRef.current = event.currentTarget.files?.[0] ?? null;
+  };
+
+  const handleFileClear = () => {
+    newReceiptFileRef.current = null;
+  };
+
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     setFeedback(null);
@@ -92,21 +106,40 @@ export function EditStatementEntryModal({
 
     setIsSubmitting(true);
 
-    Promise.resolve(
-      onSubmit?.({
-        transactionId: entry.id,
-        type: transactionType,
-        value,
-        transactionDate,
-      })
-    )
-      .then((result) => {
-        if (result && !result.ok) {
-          setFeedback(result.message);
-          return;
-        }
+    const newFile = newReceiptFileRef.current;
+    const oldBlobUrl = entry.receiptFile?.url ?? null;
 
-        onClose();
+    Promise.resolve(newFile ? uploadReceiptFile(newFile, userId) : null)
+      .then((uploadedFile) => {
+        const receiptFile = uploadedFile ?? (isExistingFileRemoved ? null : (entry.receiptFile ?? null));
+
+        return Promise.resolve(
+          onSubmit?.({
+            transactionId: entry.id,
+            type: transactionType,
+            value,
+            transactionDate,
+            receiptFile,
+          })
+        ).then((result) => {
+          if (result && !result.ok) {
+            if (uploadedFile) {
+              deleteReceiptFile(uploadedFile.url);
+            }
+            setFeedback(result.message);
+            return;
+          }
+
+          if (oldBlobUrl && (uploadedFile || isExistingFileRemoved)) {
+            deleteReceiptFile(oldBlobUrl);
+          }
+
+          onClose();
+        });
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Erro ao enviar comprovante.';
+        setFeedback(message);
       })
       .finally(() => {
         setIsSubmitting(false);
@@ -193,6 +226,58 @@ export function EditStatementEntryModal({
             containerClassName="mt-6"
             labelClassName="mb-2 text-body-sm font-semibold text-body"
             inputClassName="h-12 border-primary bg-surface text-center text-title-lg text-body"
+          />
+
+          {entry.receiptFile && !isExistingFileRemoved ? (
+            <div className="mt-6">
+              <p className="mb-2 text-body-sm font-semibold text-body">Comprovante atual</p>
+              <div className="flex items-center gap-2">
+                <span
+                  className="min-w-0 flex-1 truncate text-body-xs text-subtle"
+                  title={entry.receiptFile.filename}
+                >
+                  {entry.receiptFile.filename}
+                </span>
+                <a
+                  href={entry.receiptFile.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Abrir comprovante ${entry.receiptFile.filename} em nova aba`}
+                  className="inline-flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-sm text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                >
+                  <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+                    <path
+                      d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                </a>
+                <button
+                  type="button"
+                  aria-label="Excluir comprovante"
+                  onClick={() => setIsExistingFileRemoved(true)}
+                  className="inline-flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-sm text-subtle transition-colors hover:bg-error/10 hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          <FileInput
+            label={entry.receiptFile && !isExistingFileRemoved ? 'Substituir comprovante' : 'Comprovante'}
+            id="edit-transaction-file"
+            name="edit-transaction-file"
+            accept="image/*,.pdf"
+            containerClassName="mt-6"
+            labelClassName="mb-2 text-body-sm font-semibold text-body"
+            inputClassName="border-primary"
+            onChange={handleFileChange}
+            onClear={handleFileClear}
           />
 
           {feedback ? (

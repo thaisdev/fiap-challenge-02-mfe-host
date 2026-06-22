@@ -99,6 +99,7 @@ export function useAccountActions() {
   );
 
   return {
+    userId: userId ?? null,
     reloadAccount,
     onSubmitTransaction,
     onDeleteTransaction,

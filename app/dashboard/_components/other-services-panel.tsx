@@ -109,6 +109,7 @@ export function OtherServicesPanel() {
               <article key={option.id} className="min-h-[98px] rounded-md bg-surface shadow-sm">
                 <button
                   type="button"
+                  aria-label={`Abrir aviso do serviço ${option.label}`}
                   onClick={() => handleServiceClick(option)}
                   className="flex h-full w-full items-center justify-center rounded-md p-4"
                 >

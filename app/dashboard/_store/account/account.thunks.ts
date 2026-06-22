@@ -93,7 +93,7 @@ export function submitTransaction({
     }
 
     const transaction = createTransaction(payload, isoDate);
-    const result = await addTransaction(userId, token, transaction);
+    const result = await addTransaction(userId, token, { ...transaction, receiptFile: payload.receiptFile });
 
     if (!result.ok) {
       return result;
@@ -199,6 +199,7 @@ export function editAccountTransaction({
       type: payload.type,
       value: Math.abs(payload.value),
       date: isoDate,
+      receiptFile: payload.receiptFile,
     });
 
     if (!result.ok) {

@@ -1,4 +1,4 @@
-import type { NewTransactionResult } from '../_components/interfaces/new-transaction-panel.interfaces';
+import type { NewTransactionResult, ReceiptFile } from '../_components/interfaces/new-transaction-panel.interfaces';
 import type { TransactionType } from '../_components/interfaces/transaction.interfaces';
 
 export type TransactionPayload = {
@@ -6,6 +6,7 @@ export type TransactionPayload = {
   type: TransactionType;
   date: string;
   value: number;
+  receiptFile?: ReceiptFile | null;
 };
 
 type ServiceMessageResponse = {
@@ -74,5 +75,9 @@ export function updateTransaction(
 }
 
 export function deleteTransaction(userId: number, token: string, transactionId: number) {
-  return sendTransactionRequest(`${accountTransactionsUrl(userId)}/${transactionId}`, 'DELETE', token);
+  return sendTransactionRequest(
+    `${accountTransactionsUrl(userId)}/${transactionId}`,
+    'DELETE',
+    token
+  );
 }
