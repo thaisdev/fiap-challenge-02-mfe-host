@@ -16,6 +16,7 @@ import {
 } from '../_utils/transaction-date';
 import { useAccount, useAccountActions } from '../_store/account/account.hooks';
 import { deleteReceiptFile } from '../_services/blob-service';
+import type { TransactionsPagination } from '../_services/transaction-service';
 
 type StatementPanelProps = {
   title?: string;
@@ -23,18 +24,26 @@ type StatementPanelProps = {
   editableYear?: number | null;
   showActions?: boolean;
   entries?: Transaction[];
+  pagination?: TransactionsPagination;
+  isLoading?: boolean;
+  errorMessage?: string | null;
+  onPageChange?: (page: number) => void;
 };
 
 export function StatementPanel({
   title = 'Extrato',
   ariaLabel = 'Extrato da conta',
   showActions = true,
-  entries = [],
+  entries,
+  pagination,
+  isLoading = false,
+  errorMessage = null,
+  onPageChange,
 }: StatementPanelProps) {
   const { transactions } = useAccount();
   const { userId, onDeleteTransaction, onEditTransaction } = useAccountActions();
 
-  const visibleTransactions = entries.length > 0 ? entries : transactions;
+  const visibleTransactions = entries ?? transactions;
 
   const panelRef = useRef<HTMLElement | null>(null);
   const [selectedTransactionId, setSelectedTransactionId] = useState<number | null>(null);
@@ -103,6 +112,7 @@ export function StatementPanel({
 
   const editingTransaction =
     visibleTransactions.find((transaction) => transaction.id === editingTransactionId) ?? null;
+  const hasPagination = Boolean(pagination && onPageChange);
 
   return (
     <>
@@ -152,6 +162,14 @@ export function StatementPanel({
             <Alert variant="error" message={deleteFeedback} onClose={() => setDeleteFeedback(null)} />
           </div>
         ) : null}
+
+        {errorMessage ? (
+          <div className="mt-3">
+            <Alert variant="error" message={errorMessage} />
+          </div>
+        ) : null}
+
+        {isLoading ? <p className="mt-3 text-body-sm text-subtle">Carregando transações...</p> : null}
 
         <ul className="mt-3 space-y-3">
           {visibleTransactions.map((transaction) => (
@@ -209,6 +227,36 @@ export function StatementPanel({
             </li>
           ))}
         </ul>
+
+        {!isLoading && visibleTransactions.length === 0 ? (
+          <p className="mt-3 text-body-sm text-subtle">Nenhuma transação encontrada.</p>
+        ) : null}
+
+        {hasPagination && pagination ? (
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              tone="primary"
+              disabled={!pagination.hasPreviousPage || isLoading}
+              onClick={() => onPageChange?.(pagination.page - 1)}
+            >
+              Anterior
+            </Button>
+            <span className="text-body-sm text-subtle">
+              Página {pagination.page} de {pagination.totalPages || 1}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              tone="primary"
+              disabled={!pagination.hasNextPage || isLoading}
+              onClick={() => onPageChange?.(pagination.page + 1)}
+            >
+              Próxima
+            </Button>
+          </div>
+        ) : null}
       </aside>
 
       {editingTransaction ? (
