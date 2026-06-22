@@ -7,7 +7,6 @@ import { clearAuthSession } from '@/app/lib/auth-session';
 import { AccountSummaryCard } from './_components/account-summary-card';
 import { DashboardHeader } from './_components/dashboard-header';
 import { Alert } from '@/components/ui/alert';
-import { getTimestampFromTransactionDate } from './_utils/transaction-date';
 import { DashboardStoreProvider } from './_store/redux-provider';
 import {
   DashboardSidebarItem,
@@ -70,31 +69,6 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
     router.push('/home/login');
   };
 
-  const orderedTransactions = useMemo(() => {
-    return [...transactions].sort((transactionA, transactionB) => {
-      const timestampA = getTimestampFromTransactionDate(transactionA.date);
-      const timestampB = getTimestampFromTransactionDate(transactionB.date);
-
-      if (timestampA === null && timestampB === null) {
-        return 0;
-      }
-
-      if (timestampA === null) {
-        return 1;
-      }
-
-      if (timestampB === null) {
-        return -1;
-      }
-
-      return timestampB - timestampA;
-    });
-  }, [transactions]);
-
-  const visibleTransactions = useMemo(() => {
-    return orderedTransactions.slice(0, 6);
-  }, [orderedTransactions]);
-
   if (!session) {
     return null;
   }
@@ -140,7 +114,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
             </div>
 
             <div className="desktop:col-start-3 desktop:flex desktop:h-full">
-              <StatementPanel title="Extrato" entries={visibleTransactions} />
+              <StatementPanel title="Extrato" entries={transactions} />
             </div>
           </div>
         </div>

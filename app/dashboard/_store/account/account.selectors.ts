@@ -1,26 +1,34 @@
-import { createSelector } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-import { TransactionType } from '../../_components/interfaces/statement-panel.interfaces';
-import type { FinancialVisibilityData } from './account.types';
 
 export const selectAccountData = (state: RootState) => state.account.data;
 
 export const selectAccountBalance = (state: RootState) => state.account.data.balance;
 
-export const selectAccountTransactions = (state: RootState) => state.account.data.transactions;
-
 export const selectAccountRequest = (state: RootState) => state.account.request;
 
-export const selectFinancialVisibilityData = createSelector(
-  [selectAccountBalance, selectAccountTransactions],
-  (balance, transactions): FinancialVisibilityData => ({
-    balance,
-    depositsTotal: transactions
-      .filter((transaction) => transaction.type === TransactionType.DEPOSIT)
-      .reduce((total, transaction) => total + transaction.value, 0),
-    transfersTotal: transactions
-      .filter((transaction) => transaction.type === TransactionType.TRANSFER)
-      .reduce((total, transaction) => total + transaction.value, 0),
-    transactions: transactions.map((transaction) => ({ ...transaction })),
-  })
-);
+export const selectLatestTransactions = (state: RootState) => state.account.latestTransactions.data;
+
+export const selectLatestTransactionsRequest = (state: RootState) =>
+  state.account.latestTransactions.request;
+
+export const selectTransactionsPage = (state: RootState) => state.account.transactionsPage;
+
+export const selectFinancialSummaryRequest = (state: RootState) =>
+  state.account.financialSummary.request;
+
+export const selectFinancialVisibilityData = (state: RootState) => ({
+  ...state.account.financialSummary.data,
+  transactions: state.account.financialSummary.data.transactions.map((transaction) => ({
+    ...transaction,
+  })),
+});
+
+export const selectKnownTransactions = (state: RootState) => [
+  ...state.account.latestTransactions.data,
+  ...state.account.transactionsPage.data.filter(
+    (transaction) =>
+      !state.account.latestTransactions.data.some(
+        (latestTransaction) => latestTransaction.id === transaction.id
+      )
+  ),
+];

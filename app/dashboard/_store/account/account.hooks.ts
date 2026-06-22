@@ -11,26 +11,32 @@ import { useAppDispatch, useAppSelector } from '../hooks';
 import {
   selectAccountBalance,
   selectAccountRequest,
-  selectAccountTransactions,
+  selectLatestTransactions,
+  selectTransactionsPage,
 } from './account.selectors';
 import {
   deleteAccountTransaction,
   editAccountTransaction,
-  loadAccount,
+  loadDashboardData,
+  loadTransactionsPage,
   submitTransaction,
 } from './account.thunks';
 
 const UNAUTHENTICATED_RESULT: NewTransactionResult = {
   ok: false,
-  message: 'Sessao expirada. Faca login novamente.',
+  message: 'Sessão expirada. Faça login novamente.',
 };
 
 export function useAccount() {
   return {
     balance: useAppSelector(selectAccountBalance),
-    transactions: useAppSelector(selectAccountTransactions),
+    transactions: useAppSelector(selectLatestTransactions),
     request: useAppSelector(selectAccountRequest),
   };
+}
+
+export function useTransactionsPage() {
+  return useAppSelector(selectTransactionsPage);
 }
 
 export function useAccountActions() {
@@ -44,8 +50,19 @@ export function useAccountActions() {
       return Promise.resolve();
     }
 
-    return dispatch(loadAccount({ userId, token }));
+    return dispatch(loadDashboardData({ userId, token }));
   }, [dispatch, token, userId]);
+
+  const reloadTransactionsPage = useCallback(
+    ({ page = 1, limit = 10 }: { page?: number; limit?: number } = {}) => {
+      if (!userId || !token) {
+        return Promise.resolve();
+      }
+
+      return dispatch(loadTransactionsPage({ userId, token, page, limit }));
+    },
+    [dispatch, token, userId]
+  );
 
   const onSubmitTransaction = useCallback(
     (payload: NewTransactionPayload) => {
@@ -101,6 +118,7 @@ export function useAccountActions() {
   return {
     userId: userId ?? null,
     reloadAccount,
+    reloadTransactionsPage,
     onSubmitTransaction,
     onDeleteTransaction,
     onEditTransaction,

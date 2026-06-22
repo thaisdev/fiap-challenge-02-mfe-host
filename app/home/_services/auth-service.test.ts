@@ -8,7 +8,7 @@ describe('auth-service', () => {
   });
 
   describe('registerAccount', () => {
-    it('envia cadastro para api/users e usa fallback de sucesso quando a API nao retorna mensagem', async () => {
+    it('envia cadastro para /api/users e usa fallback de sucesso quando a API não retorna mensagem', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({
@@ -38,7 +38,7 @@ describe('auth-service', () => {
       });
       expect(result).toEqual({
         ok: true,
-        message: 'Usuario criado com sucesso.',
+        message: 'Usuário criado com sucesso.',
       });
     });
 
@@ -57,11 +57,11 @@ describe('auth-service', () => {
 
       expect(result).toEqual({
         ok: true,
-        message: 'Usuario criado com sucesso.',
+        message: 'Usuário criado com sucesso.',
       });
     });
 
-    it('usa fallback de erro quando API nao manda mensagem', async () => {
+    it('usa fallback de erro quando API não manda mensagem', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: false,
         json: vi.fn().mockResolvedValue({}),
@@ -87,7 +87,7 @@ describe('auth-service', () => {
       });
       expect(result).toEqual({
         ok: false,
-        message: 'Nao foi possivel criar a conta. Tente novamente.',
+        message: 'Não foi possível criar a conta. Tente novamente.',
       });
     });
   });
@@ -107,11 +107,11 @@ describe('auth-service', () => {
 
       expect(result).toEqual({
         ok: false,
-        message: 'Nao foi possivel autenticar. Revise seus dados.',
+        message: 'Não foi possível autenticar. Revise seus dados.',
       });
     });
 
-    it('retorna token e dados basicos do usuario quando login e valido', async () => {
+    it('retorna token e dados básicos do usuário quando login é válido', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({
@@ -154,7 +154,7 @@ describe('auth-service', () => {
       });
     });
 
-    it('retorna falha quando login 200 nao traz token', async () => {
+    it('retorna falha quando login 200 não traz token', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({
@@ -174,7 +174,7 @@ describe('auth-service', () => {
       });
     });
 
-    it('retorna falha quando login nao retorna dados do usuario', async () => {
+    it('retorna falha quando login não retorna dados do usuário', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({
@@ -196,7 +196,7 @@ describe('auth-service', () => {
       });
     });
 
-    it('retorna erro de conexao quando fetch falha', async () => {
+    it('retorna erro de conexão quando fetch falha', async () => {
       const fetchMock = vi.fn().mockRejectedValue(new Error('network error'));
       vi.stubGlobal('fetch', fetchMock);
 
@@ -207,7 +207,7 @@ describe('auth-service', () => {
 
       expect(result).toEqual({
         ok: false,
-        message: 'Erro de conexao. Tente novamente em instantes.',
+        message: 'Erro de conexão. Tente novamente em instantes.',
       });
     });
   });
@@ -218,14 +218,6 @@ describe('auth-service', () => {
         ok: true,
         json: vi.fn().mockResolvedValue({
           balance: 2500,
-          transactions: [
-            {
-              id: 123,
-              type: 'DEPOSIT',
-              date: '2026-06-14T19:48:00Z',
-              value: 100,
-            },
-          ],
         }),
       });
       vi.stubGlobal('fetch', fetchMock);
@@ -241,19 +233,11 @@ describe('auth-service', () => {
         ok: true,
         account: {
           balance: 2500,
-          transactions: [
-            {
-              id: 123,
-              type: 'DEPOSIT',
-              date: '2026-06-14T19:48:00Z',
-              value: 100,
-            },
-          ],
         },
       });
     });
 
-    it('retorna falha quando a conta retorna 404 de usuario nao encontrado', async () => {
+    it('retorna falha quando a conta retorna 404 de usuário não encontrado', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: false,
         json: vi.fn().mockResolvedValue({ message: 'Usuário não encontrado' }),
@@ -268,7 +252,7 @@ describe('auth-service', () => {
       });
     });
 
-    it('retorna falha quando a conta retorna 401 de token invalido', async () => {
+    it('retorna falha quando a conta retorna 401 de token inválido', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: false,
         json: vi.fn().mockResolvedValue({ message: 'Token inválido ou expirado' }),
@@ -283,7 +267,7 @@ describe('auth-service', () => {
       });
     });
 
-    it('retorna falha quando a conta vem com corpo invalido', async () => {
+    it('retorna falha quando a conta vem com corpo inválido', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue(null),
@@ -294,11 +278,11 @@ describe('auth-service', () => {
 
       expect(result).toEqual({
         ok: false,
-        message: 'Nao foi possivel autenticar. Revise seus dados.',
+        message: 'Não foi possível autenticar. Revise seus dados.',
       });
     });
 
-    it('retorna falha quando a conta vem com extrato invalido', async () => {
+    it('ignora transactions extras porque o contrato da conta usa apenas saldo', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue({
@@ -311,12 +295,14 @@ describe('auth-service', () => {
       const result = await fetchAccountByUserId(969, 'mock-token-user-1');
 
       expect(result).toEqual({
-        ok: false,
-        message: 'Nao foi possivel autenticar. Revise seus dados.',
+        ok: true,
+        account: {
+          balance: 2500,
+        },
       });
     });
 
-    it('retorna erro de conexao quando fetch falha', async () => {
+    it('retorna erro de conexão quando fetch falha', async () => {
       const fetchMock = vi.fn().mockRejectedValue(new Error('network error'));
       vi.stubGlobal('fetch', fetchMock);
 
@@ -324,7 +310,7 @@ describe('auth-service', () => {
 
       expect(result).toEqual({
         ok: false,
-        message: 'Erro de conexao. Tente novamente em instantes.',
+        message: 'Erro de conexão. Tente novamente em instantes.',
       });
     });
   });

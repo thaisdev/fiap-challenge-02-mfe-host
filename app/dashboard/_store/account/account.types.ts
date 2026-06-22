@@ -1,10 +1,10 @@
 import type { Transaction } from '../../_components/interfaces/statement-panel.interfaces';
+import type { TransactionsPagination } from '../../_services/transaction-service';
 
 export type AccountRequestStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 export type AccountData = {
   balance: number;
-  transactions: Transaction[];
 };
 
 export type AccountRequestState = {
@@ -12,9 +12,26 @@ export type AccountRequestState = {
   errorMessage: string | null;
 };
 
+export type TransactionsState = {
+  data: Transaction[];
+  request: AccountRequestState;
+};
+
+export type PaginatedTransactionsState = TransactionsState & {
+  pagination: TransactionsPagination;
+};
+
+export type FinancialSummaryState = {
+  data: FinancialVisibilityData;
+  request: AccountRequestState;
+};
+
 export type AccountState = {
   data: AccountData;
   request: AccountRequestState;
+  latestTransactions: TransactionsState;
+  transactionsPage: PaginatedTransactionsState;
+  financialSummary: FinancialSummaryState;
 };
 
 export type FinancialVisibilityData = {
