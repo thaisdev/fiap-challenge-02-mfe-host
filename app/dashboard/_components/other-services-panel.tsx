@@ -27,84 +27,71 @@ export function OtherServicesPanel() {
   return (
     <section className="relative cursor-pointer overflow-hidden rounded-md p-5" aria-live="polite">
       {activeService?.id === 'my-cards' ? (
-        <div className="bg-[#cbcbcb] rounded-2xl p-10">
-          {/* Aqui entra a tela de Meus Cartões */}
-          <h2 className="text-2xl font-bold text-black">Meus Cartões</h2>
+        <div className="bg-[#cbcbcb] rounded-2xl p-6 sm:p-10">
+          <h2 className="text-xl sm:text-2xl font-bold text-black">Meus Cartões</h2>
 
-          {/* Exemplo de conteúdo da aba */}
-          <div className="bg-none">
-            <div className="bg-none pt-5">
-              <p className="text-body-md">Cartão Físico</p>
-            </div>
+          <div className="pt-5">
+            <p className="text-body-md">Cartão Físico</p>
           </div>
 
-          {/* Container do cartão + botões */}
-          <div className="flex items-start gap-6 mt-6">
-            {/* Cartão */}
-            <div className="bg-[#004d61] rounded-2xl w-[350px] p-4 shadow-md">
-              <p className="text-2xl text-white">Byte</p>
+          {/* Primeiro cartão */}
+          <div className="flex flex-col lg:flex-row items-start gap-6 mt-6">
+            <div className="bg-[#004d61] rounded-2xl w-full sm:w-[300px] lg:w-[350px] p-4 shadow-md flex-shrink-0">
+              <p className="text-xl sm:text-2xl text-white">Byte</p>
               <p className="text-body-md tracking-[0.05em] text-white">Platinum</p>
               <p className="text-body-md mt-8 text-white">Joana Fonseca Gomes</p>
               <p className="text-body-md mt-2 text-white">•••••••••</p>
             </div>
 
-            {/* Área dos botões */}
-            <div className="flex flex-col flex-1">
-              <button className="cursor-pointer rounded bg-orange-500 px-4 py-3 text-white font-semibold transition-transform hover:scale-105">
+            <div className="flex flex-col flex-1 items-stretch">
+              <button className="w-full rounded bg-orange-500 px-4 py-3 text-white font-semibold transition-transform hover:scale-105 lg:w-auto">
                 Configurar
               </button>
-              <button className="mt-3 cursor-pointer rounded border border-red-500 px-4 py-3 text-red-500 font-semibold transition-transform hover:scale-105">
+              <button className="w-full mt-3 rounded border border-red-500 px-4 py-3 text-red-500 font-semibold transition-transform hover:scale-105 lg:w-auto">
                 Bloquear
               </button>
-
-              {/* Texto abaixo dos botões */}
               <p className="mt-4 text-sm text-center text-gray-700">Função: Débito/Crédito</p>
             </div>
           </div>
 
-          {/* Container do cartão + botões */}
-          <div className="flex items-start gap-6 mt-6">
-            {/* Cartão */}
-            <div className="bg-[#8b8b8b] rounded-2xl w-[350px] p-4 shadow-md">
-              <p className="text-2xl text-white">Byte</p>
+          {/* Segundo cartão */}
+          <div className="flex flex-col lg:flex-row items-start gap-6 mt-6">
+            <div className="bg-[#8b8b8b] rounded-2xl w-full sm:w-[300px] lg:w-[350px] p-4 shadow-md flex-shrink-0">
+              <p className="text-xl sm:text-2xl text-white">Byte</p>
               <p className="text-body-md tracking-[0.05em] text-white">Platinum</p>
               <p className="text-body-md mt-8 text-white">Joana Fonseca Gomes</p>
               <p className="text-body-md mt-2 text-white">•••••••••</p>
             </div>
 
-            {/* Área dos botões */}
-            <div className="flex flex-col flex-1">
-              <button className="cursor-pointer rounded bg-orange-500 px-4 py-3 text-white font-semibold transition-transform hover:scale-105">
+            <div className="flex flex-col flex-1 items-stretch">
+              <button className="w-full rounded bg-orange-500 px-4 py-3 text-white font-semibold transition-transform hover:scale-105 lg:w-auto">
                 Configurar
               </button>
-              <button className="mt-3 cursor-pointer rounded border border-red-500 px-4 py-3 text-red-500 font-semibold transition-transform hover:scale-105">
+              <button className="w-full mt-3 rounded border border-red-500 px-4 py-3 text-red-500 font-semibold transition-transform hover:scale-105 lg:w-auto">
                 Bloquear
               </button>
-
-              {/* Texto abaixo dos botões */}
               <p className="mt-4 text-sm text-center text-gray-700">Função: Débito/Crédito</p>
             </div>
           </div>
 
-          {/* Botão para voltar ao painel */}
           <button
             type="button"
             onClick={() => setActiveService(null)}
-            className="mt-4 cursor-pointer rounded bg-primary px-4 py-2 text-white"
+            className="mt-6 w-full lg:w-auto rounded bg-primary px-4 py-2 text-white"
           >
             Voltar
           </button>
         </div>
       ) : (
         <div className="relative z-10">
-          <h2 className="cursor-pointer text-title-xl font-bold text-black">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-black">
             Confira os serviços disponíveis
           </h2>
           <p className="mt-2 text-body-md text-body">
             Acesse atalhos do seu banco em um único lugar.
           </p>
 
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {serviceOptions.map((option) => (
               <article key={option.id} className="min-h-[98px] rounded-md bg-surface shadow-sm">
                 <button
@@ -113,9 +100,7 @@ export function OtherServicesPanel() {
                   onClick={() => handleServiceClick(option)}
                   className="flex h-full w-full items-center justify-center rounded-md p-4"
                 >
-                  <span className="text-body-md cursor-pointer font-semibold text-heading">
-                    {option.label}
-                  </span>
+                  <span className="text-body-md font-semibold text-heading">{option.label}</span>
                 </button>
               </article>
             ))}
