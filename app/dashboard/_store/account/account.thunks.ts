@@ -11,16 +11,20 @@ import { TransactionType } from '../../_components/interfaces/statement-panel.in
 import {
   addTransaction,
   deleteTransaction,
+  fetchFinancialSummary,
+  fetchTransactions,
   updateTransaction,
 } from '../../_services/transaction-service';
 import {
+  dateOnlyFromTransactionDate,
   formatIsoDateToPtBr,
+  getDefaultTransactionDate,
   getTransactionDateRange,
   toTransactionIsoDate,
 } from '../../_utils/transaction-date';
 import type { AppThunk } from '../store';
 import { accountActions } from './account.slice';
-import { selectAccountData } from './account.selectors';
+import { selectAccountData, selectKnownTransactions } from './account.selectors';
 
 type AccountSessionParams = {
   userId: number;
@@ -29,6 +33,16 @@ type AccountSessionParams = {
 
 function createTransactionId() {
   return Date.now() + Math.floor(Math.random() * 1000);
+}
+
+function resolveCreatedTransactionDate(isoDate: string) {
+  const selectedDate = dateOnlyFromTransactionDate(isoDate);
+
+  if (selectedDate !== getDefaultTransactionDate()) {
+    return isoDate;
+  }
+
+  return new Date().toISOString();
 }
 
 function createTransaction(
@@ -56,13 +70,87 @@ export function loadAccount({
       dispatch(
         accountActions.hydrateAccount({
           balance: result.account.balance,
-          transactions: [...result.account.transactions],
         })
       );
       return;
     }
 
     dispatch(accountActions.setAccountError(result.message));
+  };
+}
+
+export function loadLatestTransactions({
+  userId,
+  token,
+  limit = 6,
+}: AccountSessionParams & {
+  limit?: number;
+}): AppThunk<Promise<void>> {
+  return async (dispatch) => {
+    dispatch(accountActions.setLatestTransactionsLoading());
+
+    const result = await fetchTransactions(userId, token, { page: 1, limit });
+
+    if (result.ok) {
+      dispatch(accountActions.hydrateLatestTransactions(result.transactions));
+      return;
+    }
+
+    dispatch(accountActions.setLatestTransactionsError(result.message));
+  };
+}
+
+export function loadTransactionsPage({
+  userId,
+  token,
+  page = 1,
+  limit = 10,
+}: AccountSessionParams & {
+  page?: number;
+  limit?: number;
+}): AppThunk<Promise<void>> {
+  return async (dispatch) => {
+    dispatch(accountActions.setTransactionsPageLoading({ page, limit }));
+
+    const result = await fetchTransactions(userId, token, { page, limit });
+
+    if (result.ok) {
+      dispatch(accountActions.hydrateTransactionsPage(result.transactions));
+      return;
+    }
+
+    dispatch(accountActions.setTransactionsPageError(result.message));
+  };
+}
+
+export function loadFinancialSummary({
+  userId,
+  token,
+}: AccountSessionParams): AppThunk<Promise<void>> {
+  return async (dispatch) => {
+    dispatch(accountActions.setFinancialSummaryLoading());
+
+    const result = await fetchFinancialSummary(userId, token);
+
+    if (result.ok) {
+      dispatch(accountActions.hydrateFinancialSummary(result.summary));
+      return;
+    }
+
+    dispatch(accountActions.setFinancialSummaryError(result.message));
+  };
+}
+
+export function loadDashboardData({
+  userId,
+  token,
+}: AccountSessionParams): AppThunk<Promise<void>> {
+  return async (dispatch) => {
+    await Promise.all([
+      dispatch(loadAccount({ userId, token })),
+      dispatch(loadLatestTransactions({ userId, token })),
+      dispatch(loadFinancialSummary({ userId, token })),
+    ]);
   };
 }
 
@@ -80,7 +168,7 @@ export function submitTransaction({
     if (payload.type === TransactionType.TRANSFER && payload.value > account.balance) {
       return {
         ok: false,
-        message: 'Saldo insuficiente para concluir a transferencia.',
+        message: 'Saldo insuficiente para concluir a transferência.',
       };
     }
 
@@ -88,18 +176,19 @@ export function submitTransaction({
     if (!isoDate) {
       return {
         ok: false,
-        message: `Data invalida. Selecione uma data entre ${formatIsoDateToPtBr(transactionDateRange.minDate)} e ${formatIsoDateToPtBr(transactionDateRange.maxDate)}.`,
+        message: `Data inválida. Selecione uma data entre ${formatIsoDateToPtBr(transactionDateRange.minDate)} e ${formatIsoDateToPtBr(transactionDateRange.maxDate)}.`,
       };
     }
 
     const transaction = createTransaction(payload, isoDate);
-    const result = await addTransaction(userId, token, { ...transaction, receiptFile: payload.receiptFile });
+    transaction.date = resolveCreatedTransactionDate(transaction.date);
+    const result = await addTransaction(userId, token, { ...transaction, receiptFile: payload.receiptFile })
 
     if (!result.ok) {
       return result;
     }
 
-    await dispatch(loadAccount({ userId, token }));
+    dispatch(accountActions.applyTransactionCreated(transaction));
 
     return { ok: true };
   };
@@ -114,14 +203,14 @@ export function deleteAccountTransaction({
 }): AppThunk<Promise<NewTransactionResult>> {
   return async (dispatch, getState) => {
     const account = selectAccountData(getState());
-    const transactionToDelete = account.transactions.find(
+    const transactionToDelete = selectKnownTransactions(getState()).find(
       (transaction) => transaction.id === transactionId
     );
 
     if (!transactionToDelete) {
       return {
         ok: false,
-        message: 'Lancamento nao encontrado para exclusao.',
+        message: 'Lançamento não encontrado para exclusão.',
       };
     }
 
@@ -134,7 +223,7 @@ export function deleteAccountTransaction({
     if (projectedBalance < 0) {
       return {
         ok: false,
-        message: 'Nao e possivel excluir este lancamento pois resultaria em saldo negativo.',
+        message: 'Não é possível excluir este lançamento pois resultaria em saldo negativo.',
       };
     }
 
@@ -144,7 +233,7 @@ export function deleteAccountTransaction({
       return result;
     }
 
-    await dispatch(loadAccount({ userId, token }));
+    dispatch(accountActions.applyTransactionDeleted(transactionToDelete));
 
     return { ok: true };
   };
@@ -160,14 +249,14 @@ export function editAccountTransaction({
   return async (dispatch, getState) => {
     const account = selectAccountData(getState());
     const transactionDateRange = getTransactionDateRange();
-    const transactionToEdit = account.transactions.find(
+    const transactionToEdit = selectKnownTransactions(getState()).find(
       (transaction) => transaction.id === payload.transactionId
     );
 
     if (!transactionToEdit) {
       return {
         ok: false,
-        message: 'Lancamento nao encontrado para edicao.',
+        message: 'Lançamento não encontrado para edição.',
       };
     }
 
@@ -175,7 +264,7 @@ export function editAccountTransaction({
     if (!isoDate) {
       return {
         ok: false,
-        message: `Data invalida. Selecione uma data entre ${formatIsoDateToPtBr(transactionDateRange.minDate)} e ${formatIsoDateToPtBr(transactionDateRange.maxDate)}.`,
+        message: `Data inválida. Selecione uma data entre ${formatIsoDateToPtBr(transactionDateRange.minDate)} e ${formatIsoDateToPtBr(transactionDateRange.maxDate)}.`,
       };
     }
 
@@ -190,23 +279,29 @@ export function editAccountTransaction({
     if (projectedBalance < 0) {
       return {
         ok: false,
-        message: 'Saldo insuficiente para concluir esta operacao.',
+        message: 'Saldo insuficiente para concluir esta operação.',
       };
     }
 
-    const result = await updateTransaction(userId, token, payload.transactionId, {
+    const nextTransaction = {
       id: payload.transactionId,
       type: payload.type,
       value: Math.abs(payload.value),
       date: isoDate,
       receiptFile: payload.receiptFile,
-    });
+    };
+    const result = await updateTransaction(userId, token, payload.transactionId, nextTransaction);
 
     if (!result.ok) {
       return result;
     }
 
-    await dispatch(loadAccount({ userId, token }));
+    dispatch(
+      accountActions.applyTransactionUpdated({
+        previousTransaction: transactionToEdit,
+        nextTransaction,
+      })
+    );
 
     return { ok: true };
   };

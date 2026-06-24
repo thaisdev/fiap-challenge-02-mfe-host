@@ -1,8 +1,10 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchAccountByUserId } from '@/app/home/_services/auth-service';
 import {
   addTransaction,
   deleteTransaction,
+  fetchFinancialSummary,
+  fetchTransactions,
   updateTransaction,
 } from '../../_services/transaction-service';
 import { TransactionType } from '../../_components/interfaces/statement-panel.interfaces';
@@ -12,6 +14,7 @@ import {
   deleteAccountTransaction,
   editAccountTransaction,
   loadAccount,
+  loadDashboardData,
   submitTransaction,
 } from './account.thunks';
 
@@ -22,20 +25,62 @@ vi.mock('@/app/home/_services/auth-service', () => ({
 vi.mock('../../_services/transaction-service', () => ({
   addTransaction: vi.fn(),
   deleteTransaction: vi.fn(),
+  fetchFinancialSummary: vi.fn(),
+  fetchTransactions: vi.fn(),
   updateTransaction: vi.fn(),
 }));
 
 const fetchAccountByUserIdMock = vi.mocked(fetchAccountByUserId);
 const addTransactionMock = vi.mocked(addTransaction);
 const deleteTransactionMock = vi.mocked(deleteTransaction);
+const fetchFinancialSummaryMock = vi.mocked(fetchFinancialSummary);
+const fetchTransactionsMock = vi.mocked(fetchTransactions);
 const updateTransactionMock = vi.mocked(updateTransaction);
+
+const paginatedTransactions = {
+  data: [
+    {
+      id: 1,
+      type: TransactionType.DEPOSIT,
+      date: '2026-06-20T12:00:00.000Z',
+      value: 250,
+    },
+  ],
+  pagination: {
+    page: 1,
+    limit: 6,
+    totalItems: 1,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPreviousPage: false,
+  },
+};
 
 describe('account thunks', () => {
   beforeEach(() => {
     fetchAccountByUserIdMock.mockReset();
     addTransactionMock.mockReset();
     deleteTransactionMock.mockReset();
+    fetchFinancialSummaryMock.mockReset();
+    fetchTransactionsMock.mockReset();
     updateTransactionMock.mockReset();
+
+    fetchTransactionsMock.mockResolvedValue({
+      ok: true,
+      transactions: paginatedTransactions,
+    });
+    fetchFinancialSummaryMock.mockResolvedValue({
+      ok: true,
+      summary: {
+        balance: 250,
+        depositsTotal: 250,
+        transfersTotal: 0,
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('carrega a conta e hidrata o estado global', async () => {
@@ -44,14 +89,6 @@ describe('account thunks', () => {
       ok: true,
       account: {
         balance: 250,
-        transactions: [
-          {
-            id: 1,
-            type: TransactionType.DEPOSIT,
-            date: '2026-06-20T12:00:00.000Z',
-            value: 250,
-          },
-        ],
       },
     });
 
@@ -62,14 +99,9 @@ describe('account thunks', () => {
     expect(store.getState().account.request.status).toBe('ready');
   });
 
-  it('bloqueia transferencia maior que o saldo sem chamar a API', async () => {
+  it('bloqueia transferência maior que o saldo sem chamar a API', async () => {
     const store = makeDashboardStore();
-    store.dispatch(
-      accountActions.hydrateAccount({
-        balance: 100,
-        transactions: [],
-      })
-    );
+    store.dispatch(accountActions.hydrateAccount({ balance: 100 }));
 
     const result = await store.dispatch(
       submitTransaction({
@@ -85,29 +117,45 @@ describe('account thunks', () => {
 
     expect(result).toEqual({
       ok: false,
-      message: 'Saldo insuficiente para concluir a transferencia.',
+      message: 'Saldo insuficiente para concluir a transferência.',
     });
     expect(addTransactionMock).not.toHaveBeenCalled();
   });
 
-  it('adiciona transacao e recarrega a conta quando a API aceita', async () => {
+  it('adiciona transação e atualiza saldo e resumo localmente quando a API aceita', async () => {
     const store = makeDashboardStore();
-    store.dispatch(accountActions.hydrateAccount({ balance: 100, transactions: [] }));
-    addTransactionMock.mockResolvedValue({ ok: true });
-    fetchAccountByUserIdMock.mockResolvedValue({
-      ok: true,
-      account: {
-        balance: 150,
-        transactions: [
-          {
-            id: 2,
-            type: TransactionType.DEPOSIT,
-            date: '2026-06-20T12:00:00.000Z',
-            value: 50,
-          },
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-21T18:30:00.000Z'));
+
+    store.dispatch(accountActions.hydrateAccount({ balance: 100 }));
+    store.dispatch(
+      accountActions.hydrateFinancialSummary({
+        balance: 100,
+        depositsTotal: 100,
+        transfersTotal: 0,
+      })
+    );
+    store.dispatch(
+      accountActions.hydrateLatestTransactions({
+        data: [
+          { id: 1, type: TransactionType.DEPOSIT, date: '2026-06-21T17:00:00.000Z', value: 10 },
+          { id: 2, type: TransactionType.DEPOSIT, date: '2026-06-21T16:00:00.000Z', value: 10 },
+          { id: 3, type: TransactionType.DEPOSIT, date: '2026-06-21T15:00:00.000Z', value: 10 },
+          { id: 4, type: TransactionType.DEPOSIT, date: '2026-06-21T14:00:00.000Z', value: 10 },
+          { id: 5, type: TransactionType.DEPOSIT, date: '2026-06-21T13:00:00.000Z', value: 10 },
+          { id: 6, type: TransactionType.DEPOSIT, date: '2026-06-21T12:00:00.000Z', value: 10 },
         ],
-      },
-    });
+        pagination: {
+          page: 1,
+          limit: 6,
+          totalItems: 6,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      })
+    );
+    addTransactionMock.mockResolvedValue({ ok: true });
 
     const result = await store.dispatch(
       submitTransaction({
@@ -116,7 +164,7 @@ describe('account thunks', () => {
         payload: {
           type: TransactionType.DEPOSIT,
           value: 50,
-          transactionDate: '2026-06-20',
+          transactionDate: '2026-06-21',
         },
       })
     );
@@ -125,26 +173,154 @@ describe('account thunks', () => {
     expect(addTransactionMock).toHaveBeenCalledWith(
       969,
       'token-123',
-      expect.objectContaining({ type: TransactionType.DEPOSIT, value: 50 })
+      expect.objectContaining({
+        type: TransactionType.DEPOSIT,
+        value: 50,
+        date: '2026-06-21T18:30:00.000Z',
+      })
     );
+    expect(fetchAccountByUserIdMock).not.toHaveBeenCalled();
+    expect(fetchTransactionsMock).not.toHaveBeenCalled();
+    expect(fetchFinancialSummaryMock).not.toHaveBeenCalled();
     expect(store.getState().account.data.balance).toBe(150);
+    expect(store.getState().account.financialSummary.data).toMatchObject({
+      balance: 150,
+      depositsTotal: 150,
+      transfersTotal: 0,
+    });
+    expect(store.getState().account.latestTransactions.data[0]).toMatchObject({
+      type: TransactionType.DEPOSIT,
+      value: 50,
+      date: '2026-06-21T18:30:00.000Z',
+    });
+    expect(store.getState().account.latestTransactions.data).toHaveLength(6);
   });
 
-  it('valida exclusao e edicao usando o estado atual da store', async () => {
+  it('edita transação e atualiza saldo, resumo e listas carregadas localmente', async () => {
     const store = makeDashboardStore();
+    store.dispatch(accountActions.hydrateAccount({ balance: 500 }));
     store.dispatch(
-      accountActions.hydrateAccount({
-        balance: 120,
-        transactions: [
+      accountActions.hydrateFinancialSummary({
+        balance: 500,
+        depositsTotal: 500,
+        transfersTotal: 0,
+      })
+    );
+    store.dispatch(
+      accountActions.hydrateLatestTransactions({
+        data: [
           {
             id: 1,
             type: TransactionType.DEPOSIT,
             date: '2026-06-20T12:00:00.000Z',
-            value: 120,
+            value: 100,
           },
         ],
+        pagination: {
+          page: 1,
+          limit: 6,
+          totalItems: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
       })
     );
+    updateTransactionMock.mockResolvedValue({ ok: true });
+
+    const result = await store.dispatch(
+      editAccountTransaction({
+        userId: 969,
+        token: 'token-123',
+        payload: {
+          transactionId: 1,
+          type: TransactionType.TRANSFER,
+          value: 40,
+          transactionDate: '2026-06-21',
+        },
+      })
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(updateTransactionMock).toHaveBeenCalledWith(
+      969,
+      'token-123',
+      1,
+      expect.objectContaining({ type: TransactionType.TRANSFER, value: 40 })
+    );
+    expect(fetchAccountByUserIdMock).not.toHaveBeenCalled();
+    expect(fetchTransactionsMock).not.toHaveBeenCalled();
+    expect(fetchFinancialSummaryMock).not.toHaveBeenCalled();
+    expect(store.getState().account.data.balance).toBe(360);
+    expect(store.getState().account.financialSummary.data).toMatchObject({
+      balance: 360,
+      depositsTotal: 400,
+      transfersTotal: 40,
+    });
+    expect(store.getState().account.latestTransactions.data[0]).toMatchObject({
+      id: 1,
+      type: TransactionType.TRANSFER,
+      value: 40,
+    });
+  });
+
+  it('exclui transação e atualiza saldo, resumo e listas carregadas localmente', async () => {
+    const store = makeDashboardStore();
+    store.dispatch(accountActions.hydrateAccount({ balance: 120 }));
+    store.dispatch(
+      accountActions.hydrateFinancialSummary({
+        balance: 120,
+        depositsTotal: 200,
+        transfersTotal: 80,
+      })
+    );
+    store.dispatch(
+      accountActions.hydrateLatestTransactions({
+        data: [
+          {
+            id: 1,
+            type: TransactionType.TRANSFER,
+            date: '2026-06-20T12:00:00.000Z',
+            value: 80,
+          },
+        ],
+        pagination: {
+          page: 1,
+          limit: 6,
+          totalItems: 1,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        },
+      })
+    );
+    deleteTransactionMock.mockResolvedValue({ ok: true });
+
+    const result = await store.dispatch(
+      deleteAccountTransaction({
+        userId: 969,
+        token: 'token-123',
+        transactionId: 1,
+      })
+    );
+
+    expect(result).toEqual({ ok: true });
+    expect(deleteTransactionMock).toHaveBeenCalledWith(969, 'token-123', 1);
+    expect(fetchAccountByUserIdMock).not.toHaveBeenCalled();
+    expect(fetchTransactionsMock).not.toHaveBeenCalled();
+    expect(fetchFinancialSummaryMock).not.toHaveBeenCalled();
+    expect(store.getState().account.data.balance).toBe(200);
+    expect(store.getState().account.financialSummary.data).toMatchObject({
+      balance: 200,
+      depositsTotal: 200,
+      transfersTotal: 0,
+    });
+    expect(store.getState().account.latestTransactions.data).toEqual([]);
+  });
+
+  it('valida exclusão e edição usando o estado atual da store', async () => {
+    const store = makeDashboardStore();
+    store.dispatch(accountActions.hydrateAccount({ balance: 120 }));
 
     await expect(
       store.dispatch(
@@ -154,7 +330,7 @@ describe('account thunks', () => {
           transactionId: 999,
         })
       )
-    ).resolves.toMatchObject({ ok: false, message: expect.stringContaining('nao encontrado') });
+    ).resolves.toMatchObject({ ok: false, message: expect.stringContaining('não encontrado') });
 
     await expect(
       store.dispatch(
@@ -169,9 +345,38 @@ describe('account thunks', () => {
           },
         })
       )
-    ).resolves.toMatchObject({ ok: false, message: expect.stringContaining('nao encontrado') });
+    ).resolves.toMatchObject({ ok: false, message: expect.stringContaining('não encontrado') });
 
     expect(deleteTransactionMock).not.toHaveBeenCalled();
     expect(updateTransactionMock).not.toHaveBeenCalled();
+  });
+
+  it('carrega os dados iniciais do dashboard em endpoints separados', async () => {
+    const store = makeDashboardStore();
+    fetchAccountByUserIdMock.mockResolvedValue({
+      ok: true,
+      account: {
+        balance: 7700,
+      },
+    });
+    fetchFinancialSummaryMock.mockResolvedValue({
+      ok: true,
+      summary: {
+        balance: 7700,
+        depositsTotal: 9700,
+        transfersTotal: 2000,
+      },
+    });
+
+    await store.dispatch(loadDashboardData({ userId: 969, token: 'token-123' }));
+
+    expect(fetchAccountByUserIdMock).toHaveBeenCalledWith(969, 'token-123');
+    expect(fetchTransactionsMock).toHaveBeenCalledWith(969, 'token-123', {
+      page: 1,
+      limit: 6,
+    });
+    expect(fetchFinancialSummaryMock).toHaveBeenCalledWith(969, 'token-123');
+    expect(store.getState().account.data.balance).toBe(7700);
+    expect(store.getState().account.financialSummary.data.depositsTotal).toBe(9700);
   });
 });

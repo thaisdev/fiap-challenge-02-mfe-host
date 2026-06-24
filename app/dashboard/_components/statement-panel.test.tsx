@@ -19,7 +19,7 @@ vi.mock('../_store/account/account.hooks', () => ({
 function getEntryByDate(date: string) {
   const entry = screen.getByText(date).closest('li');
   if (!entry) {
-    throw new Error(`Lancamento nao encontrado para data ${date}`);
+    throw new Error(`Lançamento não encontrado para data ${date}`);
   }
 
   return entry;
@@ -88,6 +88,12 @@ describe('StatementPanel', () => {
     expect(screen.queryByRole('button', { name: 'Excluir extrato' })).not.toBeInTheDocument();
   });
 
+  it('respeita lista vazia enviada por props e mostra estado vazio', () => {
+    render(<StatementPanel entries={[]} />);
+
+    expect(screen.getByText('Nenhuma transação encontrada.')).toBeInTheDocument();
+  });
+
   it('abre modal de edicao e envia payload completo de tipo, valor e data', async () => {
     render(
       <StatementPanel
@@ -140,7 +146,7 @@ describe('StatementPanel', () => {
   it('mantem modal aberto e mostra alerta quando a edicao retorna erro', async () => {
     onEditTransactionMock.mockResolvedValue({
       ok: false as const,
-      message: 'Saldo insuficiente para concluir a transferencia.',
+      message: 'Saldo insuficiente para concluir a transferência.',
     });
 
     render(

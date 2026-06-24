@@ -22,6 +22,7 @@ async function handleProxy(request: NextRequest, slug: string[]): Promise<Respon
     const value = request.headers.get(key)
     if (value) headers.set(key, value)
   }
+  headers.set('accept-encoding', 'identity')
 
   const hasBody = request.method !== 'GET' && request.method !== 'HEAD'
 
