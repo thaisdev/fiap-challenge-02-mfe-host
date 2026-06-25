@@ -2,6 +2,7 @@
 
 import { useState, type FormEventHandler } from 'react';
 import { Button } from '@/components/ui/button';
+import { DateInput } from '@/components/ui/date-input';
 import { Select } from '@/components/ui/input';
 import { TransactionType } from '../../_components/interfaces/statement-panel.interfaces';
 import type { TransactionFilters } from '../../_services/transaction-service';
@@ -16,8 +17,7 @@ const typeOptions = [
   { value: TransactionType.TRANSFER, label: 'Transferência' },
 ] as const;
 
-const dateInputClass =
-  'h-10 w-full rounded-md border border-primary bg-surface px-3 text-body-sm text-body focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary';
+const dateInputClass = 'h-10 border-primary bg-surface px-3 text-body-sm text-body';
 
 export function TransactionsFilter({ onFilter, isLoading }: TransactionsFilterProps) {
   const [startDate, setStartDate] = useState('');
@@ -50,41 +50,27 @@ export function TransactionsFilter({ onFilter, isLoading }: TransactionsFilterPr
       aria-label="Filtros de transações"
     >
       <div className="flex flex-wrap items-end gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="filter-start-date"
-            className="text-body-sm font-semibold text-body"
-          >
-            Data início
-          </label>
-          <input
-            type="date"
-            id="filter-start-date"
-            name="filter-start-date"
-            value={startDate}
-            max={endDate || undefined}
-            onChange={(e) => setStartDate(e.currentTarget.value)}
-            className={dateInputClass}
-          />
-        </div>
+        <DateInput
+          label="Data início"
+          id="filter-start-date"
+          name="filter-start-date"
+          value={startDate}
+          max={endDate || undefined}
+          onChange={setStartDate}
+          labelClassName="text-body-sm font-semibold text-body"
+          inputClassName={dateInputClass}
+        />
 
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="filter-end-date"
-            className="text-body-sm font-semibold text-body"
-          >
-            Data fim
-          </label>
-          <input
-            type="date"
-            id="filter-end-date"
-            name="filter-end-date"
-            value={endDate}
-            min={startDate || undefined}
-            onChange={(e) => setEndDate(e.currentTarget.value)}
-            className={dateInputClass}
-          />
-        </div>
+        <DateInput
+          label="Data fim"
+          id="filter-end-date"
+          name="filter-end-date"
+          value={endDate}
+          min={startDate || undefined}
+          onChange={setEndDate}
+          labelClassName="text-body-sm font-semibold text-body"
+          inputClassName={dateInputClass}
+        />
 
         <div className="flex flex-col gap-1.5">
           <Select
