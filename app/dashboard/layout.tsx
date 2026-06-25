@@ -11,7 +11,6 @@ import { DashboardStoreProvider } from './_store/redux-provider';
 import {
   DashboardSidebarItem,
   DashboardSidebarNav,
-  type DashboardTabKey,
 } from './_components/dashboard-sidebar-nav';
 import { StatementPanel } from './_components/statement-panel';
 import { ReactNode } from 'react';
@@ -55,7 +54,6 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { balance, transactions, request } = useAccount();
   const { reloadAccount } = useAccountActions();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<DashboardTabKey>('home');
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [isErrorVisible, setIsErrorVisible] = useState(true);
   const currentDateLabel = useMemo(() => formatCurrentDateLabel(), []);
@@ -93,11 +91,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
           <div className="grid gap-6 desktop:grid-cols-[200px_minmax(0,1fr)_300px] desktop:items-stretch desktop:gap-4">
             <div className="desktop:flex desktop:h-full">
-              <DashboardSidebarNav
-                items={sidebarItems}
-                activeItem={activeTab}
-                onChange={setActiveTab}
-              />
+              <DashboardSidebarNav items={sidebarItems} />
             </div>
 
             <div className="min-w-0 space-y-6 desktop:col-start-2 desktop:space-y-3">
