@@ -14,6 +14,8 @@ import {
   fetchFinancialSummary,
   fetchTransactions,
   updateTransaction,
+  type TransactionFilters,
+  type TransactionPaginationQuery,
 } from '../../_services/transaction-service';
 import {
   dateOnlyFromTransactionDate,
@@ -105,14 +107,14 @@ export function loadTransactionsPage({
   token,
   page = 1,
   limit = 10,
-}: AccountSessionParams & {
-  page?: number;
-  limit?: number;
-}): AppThunk<Promise<void>> {
+  startDate,
+  endDate,
+  type,
+}: AccountSessionParams & Partial<TransactionPaginationQuery> & TransactionFilters): AppThunk<Promise<void>> {
   return async (dispatch) => {
-    dispatch(accountActions.setTransactionsPageLoading({ page, limit }));
+    dispatch(accountActions.setTransactionsPageLoading({ page, limit, startDate, endDate, type }));
 
-    const result = await fetchTransactions(userId, token, { page, limit });
+    const result = await fetchTransactions(userId, token, { page, limit, startDate, endDate, type });
 
     if (result.ok) {
       dispatch(accountActions.hydrateTransactionsPage(result.transactions));
@@ -244,7 +246,7 @@ export function deleteAccountTransaction({
     const refetchPromises: Promise<unknown>[] = [dispatch(loadDashboardData({ userId, token }))];
     if (transactionsPage.request.status !== 'idle') {
       refetchPromises.push(
-        dispatch(loadTransactionsPage({ userId, token, page: transactionsPage.pagination.page, limit: transactionsPage.pagination.limit }))
+        dispatch(loadTransactionsPage({ userId, token, page: 1, limit: transactionsPage.pagination.limit }))
       );
     }
     await Promise.all(refetchPromises);
@@ -314,7 +316,7 @@ export function editAccountTransaction({
     const refetchPromises: Promise<unknown>[] = [dispatch(loadDashboardData({ userId, token }))];
     if (transactionsPage.request.status !== 'idle') {
       refetchPromises.push(
-        dispatch(loadTransactionsPage({ userId, token, page: transactionsPage.pagination.page, limit: transactionsPage.pagination.limit }))
+        dispatch(loadTransactionsPage({ userId, token, page: 1, limit: transactionsPage.pagination.limit }))
       );
     }
     await Promise.all(refetchPromises);

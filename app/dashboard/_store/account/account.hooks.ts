@@ -21,6 +21,7 @@ import {
   loadTransactionsPage,
   submitTransaction,
 } from './account.thunks';
+import type { TransactionFilters, TransactionPaginationQuery } from '../../_services/transaction-service';
 
 const UNAUTHENTICATED_RESULT: NewTransactionResult = {
   ok: false,
@@ -54,12 +55,12 @@ export function useAccountActions() {
   }, [dispatch, token, userId]);
 
   const reloadTransactionsPage = useCallback(
-    ({ page = 1, limit = 10 }: { page?: number; limit?: number } = {}) => {
+    ({ page = 1, limit = 10, startDate, endDate, type }: Partial<TransactionPaginationQuery> & TransactionFilters = {}) => {
       if (!userId || !token) {
         return Promise.resolve();
       }
 
-      return dispatch(loadTransactionsPage({ userId, token, page, limit }));
+      return dispatch(loadTransactionsPage({ userId, token, page, limit, startDate, endDate, type }));
     },
     [dispatch, token, userId]
   );

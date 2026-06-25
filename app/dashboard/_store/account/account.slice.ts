@@ -5,7 +5,7 @@ import type {
   FinancialVisibilityData,
   TransactionsState,
 } from './account.types';
-import type { PaginatedTransactions, TransactionsPagination } from '../../_services/transaction-service';
+import type { PaginatedTransactions, TransactionFilters, TransactionPaginationQuery, TransactionsPagination } from '../../_services/transaction-service';
 import {
   TransactionType,
   type Transaction,
@@ -119,6 +119,7 @@ const initialState: AccountState = {
   transactionsPage: {
     ...createInitialTransactionsState(),
     pagination: initialPagination,
+    filters: {},
   },
   financialSummary: {
     data: initialFinancialSummary,
@@ -160,11 +161,16 @@ export const accountSlice = createSlice({
       state.latestTransactions.request.status = 'error';
       state.latestTransactions.request.errorMessage = action.payload;
     },
-    setTransactionsPageLoading(state, action: PayloadAction<{ page: number; limit: number }>) {
+    setTransactionsPageLoading(state, action: PayloadAction<TransactionPaginationQuery & TransactionFilters>) {
       state.transactionsPage.request.status = 'loading';
       state.transactionsPage.request.errorMessage = null;
       state.transactionsPage.pagination.page = action.payload.page;
       state.transactionsPage.pagination.limit = action.payload.limit;
+      state.transactionsPage.filters = {
+        startDate: action.payload.startDate,
+        endDate: action.payload.endDate,
+        type: action.payload.type,
+      };
     },
     hydrateTransactionsPage(state, action: PayloadAction<PaginatedTransactions>) {
       state.transactionsPage.data = [...action.payload.data];

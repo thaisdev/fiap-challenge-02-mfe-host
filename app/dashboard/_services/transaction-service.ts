@@ -139,16 +139,30 @@ async function sendTransactionRequest(
   }
 }
 
+export type TransactionFilters = {
+  startDate?: string;
+  endDate?: string;
+  type?: string;
+};
+
+export type TransactionPaginationQuery = {
+  page: number;
+  limit: number;
+};
+
 export async function fetchTransactions(
   userId: number,
   token: string,
-  { page = 1, limit = 10 }: { page?: number; limit?: number } = {}
+  { page = 1, limit = 10, startDate, endDate, type }: Partial<TransactionPaginationQuery> & TransactionFilters = {}
 ): Promise<{ ok: true; transactions: PaginatedTransactions } | { ok: false; message: string }> {
   const fallbackErrorMessage = 'Não foi possível carregar as transações.';
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
   });
+  if (startDate) params.set('startDate', startDate);
+  if (endDate) params.set('endDate', endDate);
+  if (type) params.set('type', type);
 
   try {
     const response = await fetch(`${accountTransactionsUrl(userId)}?${params.toString()}`, {

@@ -5,8 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { EditStatementEntryModal } from './edit-statement-entry-modal';
-import { NewTransactionModal } from './new-transaction-modal';
+import { TransactionModal } from './transaction-modal';
+import type { NewTransactionResult } from './interfaces/new-transaction-panel.interfaces';
 import {
   formatTransactionTypeLabel,
   Transaction,
@@ -31,6 +31,7 @@ type StatementPanelProps = {
   errorMessage?: string | null;
   onPageChange?: (page: number) => void;
   viewAllHref?: string;
+  onAfterMutation?: () => void;
 };
 
 export function StatementPanel({
@@ -43,6 +44,7 @@ export function StatementPanel({
   errorMessage = null,
   onPageChange,
   viewAllHref,
+  onAfterMutation,
 }: StatementPanelProps) {
   const { transactions } = useAccount();
   const { userId, onDeleteTransaction, onEditTransaction, onSubmitTransaction } = useAccountActions();
@@ -101,6 +103,8 @@ export function StatementPanel({
         return;
       }
 
+      onAfterMutation?.();
+
       if (receiptUrl) {
         deleteReceiptFile(receiptUrl);
       }
@@ -118,6 +122,14 @@ export function StatementPanel({
   const editingTransaction =
     visibleTransactions.find((transaction) => transaction.id === editingTransactionId) ?? null;
   const hasPagination = Boolean(pagination && onPageChange);
+
+  function withAfterMutation<TPayload>(requestFn: (payload: TPayload) => Promise<NewTransactionResult>) {
+    return async (payload: TPayload): Promise<NewTransactionResult> => {
+      const result = await requestFn(payload);
+      if (result.ok) onAfterMutation?.();
+      return result;
+    };
+  }
 
   return (
     <>
@@ -296,19 +308,19 @@ export function StatementPanel({
       </aside>
 
       {editingTransaction ? (
-        <EditStatementEntryModal
+        <TransactionModal
           entry={editingTransaction}
           userId={userId}
           onClose={() => setEditingTransactionId(null)}
-          onSubmit={onEditTransaction}
+          onSubmit={withAfterMutation(onEditTransaction)}
         />
       ) : null}
 
       {isAddingTransaction ? (
-        <NewTransactionModal
+        <TransactionModal
           userId={userId}
           onClose={() => setIsAddingTransaction(false)}
-          onSubmit={onSubmitTransaction}
+          onSubmit={withAfterMutation(onSubmitTransaction)}
         />
       ) : null}
     </>
