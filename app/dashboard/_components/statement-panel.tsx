@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { EditStatementEntryModal } from './edit-statement-entry-modal';
@@ -29,6 +30,7 @@ type StatementPanelProps = {
   isLoading?: boolean;
   errorMessage?: string | null;
   onPageChange?: (page: number) => void;
+  viewAllHref?: string;
 };
 
 export function StatementPanel({
@@ -40,6 +42,7 @@ export function StatementPanel({
   isLoading = false,
   errorMessage = null,
   onPageChange,
+  viewAllHref,
 }: StatementPanelProps) {
   const { transactions } = useAccount();
   const { userId, onDeleteTransaction, onEditTransaction, onSubmitTransaction } = useAccountActions();
@@ -127,7 +130,7 @@ export function StatementPanel({
                 aria-label="Nova transação"
                 variant="solid"
                 tone="primary"
-                className="h-12 w-12 !rounded-full p-0"
+                className="h-12 w-12 rounded-full! p-0"
                 onClick={() => setIsAddingTransaction(true)}
               >
                 <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5">
@@ -139,38 +142,42 @@ export function StatementPanel({
                   />
                 </svg>
               </Button>
-              <Button
-                aria-label="Editar extrato"
-                variant="solid"
-                tone="primary"
-                className="h-12 w-12 !rounded-full p-0"
-                disabled={!areTransactionActionsEnabled}
-                onClick={handleEditSelectedTransaction}
-              >
-                <Image
-                  src="/icons/pencil-edit.svg"
-                  alt=""
-                  width={24}
-                  height={24}
-                  aria-hidden="true"
-                />
-              </Button>
-              <Button
-                aria-label="Excluir extrato"
-                variant="solid"
-                tone="primary"
-                className="h-12 w-12 !rounded-full p-0"
-                disabled={!areTransactionActionsEnabled}
-                onClick={handleDeleteSelectedTransaction}
-              >
-                <Image
-                  src="/icons/trash-exclude.svg"
-                  alt=""
-                  width={24}
-                  height={24}
-                  aria-hidden="true"
-                />
-              </Button>
+              <span title={!areTransactionActionsEnabled ? 'Selecione uma transação para editar' : undefined}>
+                <Button
+                  aria-label="Editar extrato"
+                  variant="solid"
+                  tone="primary"
+                  className="h-12 w-12 rounded-full! p-0"
+                  disabled={!areTransactionActionsEnabled}
+                  onClick={handleEditSelectedTransaction}
+                >
+                  <Image
+                    src="/icons/pencil-edit.svg"
+                    alt=""
+                    width={24}
+                    height={24}
+                    aria-hidden="true"
+                  />
+                </Button>
+              </span>
+              <span title={!areTransactionActionsEnabled ? 'Selecione uma transação para excluir' : undefined}>
+                <Button
+                  aria-label="Excluir extrato"
+                  variant="solid"
+                  tone="primary"
+                  className="h-12 w-12 rounded-full! p-0"
+                  disabled={!areTransactionActionsEnabled}
+                  onClick={handleDeleteSelectedTransaction}
+                >
+                  <Image
+                    src="/icons/trash-exclude.svg"
+                    alt=""
+                    width={24}
+                    height={24}
+                    aria-hidden="true"
+                  />
+                </Button>
+              </span>
             </div>
           ) : null}
         </div>
@@ -248,6 +255,17 @@ export function StatementPanel({
 
         {!isLoading && visibleTransactions.length === 0 ? (
           <p className="mt-3 text-body-sm text-subtle">Nenhuma transação encontrada.</p>
+        ) : null}
+
+        {viewAllHref ? (
+          <div className="mt-4">
+            <Link
+              href={viewAllHref}
+              className="block w-full rounded-md border border-primary py-2 text-center text-body-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+            >
+              Ver todas as transações
+            </Link>
+          </div>
         ) : null}
 
         {hasPagination && pagination ? (

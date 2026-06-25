@@ -114,7 +114,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
             </div>
 
             <div className="desktop:col-start-3 desktop:flex desktop:h-full">
-              <StatementPanel title="Extrato" entries={transactions} />
+              <StatementPanel title="Extrato" entries={transactions} viewAllHref="/dashboard/transactions" />
             </div>
           </div>
         </div>
