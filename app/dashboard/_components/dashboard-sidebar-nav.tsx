@@ -51,7 +51,7 @@ export function DashboardSidebarNav({ items, activeItem, onChange }: DashboardSi
         </button>
 
         {isMobileMenuOpen ? (
-          <div className="absolute left-0 top-0 z-20 w-[142px] border border-border bg-surface px-3 py-2 shadow-md">
+          <div className="absolute left-0 top-0 z-20 w-50 border border-border bg-surface px-3 py-2 shadow-md">
             <button
               type="button"
               aria-label="Fechar menu de serviços"

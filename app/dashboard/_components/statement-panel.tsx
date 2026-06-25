@@ -121,7 +121,7 @@ export function StatementPanel({
 
   return (
     <>
-      <aside ref={panelRef} className="rounded-md bg-surface px-5 py-5" aria-label={ariaLabel}>
+      <aside ref={panelRef} className="w-full rounded-md bg-surface px-5 py-5" aria-label={ariaLabel}>
         <div className="flex items-center justify-between gap-3 pr-1">
           <h2 className="text-title-xl font-bold text-black">{title}</h2>
           {showActions ? (

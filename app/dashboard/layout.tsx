@@ -91,7 +91,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
             </div>
           ) : null}
 
-          <div className="grid gap-6 desktop:grid-cols-[142px_minmax(0,1fr)_240px] desktop:items-stretch desktop:gap-4">
+          <div className="grid gap-6 desktop:grid-cols-[200px_minmax(0,1fr)_300px] desktop:items-stretch desktop:gap-4">
             <div className="desktop:flex desktop:h-full">
               <DashboardSidebarNav
                 items={sidebarItems}
@@ -113,7 +113,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
               {children}
             </div>
 
-            <div className="desktop:col-start-3 desktop:flex desktop:h-full">
+            <div className="w-full max-w-75 desktop:col-start-3 desktop:flex desktop:h-full desktop:max-w-none">
               <StatementPanel title="Extrato" entries={transactions} viewAllHref="/dashboard/transactions" />
             </div>
           </div>

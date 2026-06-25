@@ -24,7 +24,7 @@ export function AccountSummaryCard({
 
   return (
     <section
-      className="relative min-h-[560px] overflow-hidden rounded-md bg-primary px-9 py-8 text-surface mobile:min-h-[520px] mobile:px-5 mobile:py-7 desktop:min-h-[350px] desktop:px-6 desktop:py-7"
+      className="relative min-h-[560px] overflow-hidden rounded-md bg-primary px-9 py-8 text-surface mobile:min-h-[520px] mobile:px-5 mobile:py-7 desktop:min-h-[260px] desktop:px-6 desktop:py-7"
       aria-label="Resumo da conta"
     >
       <Image
