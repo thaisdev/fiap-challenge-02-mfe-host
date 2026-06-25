@@ -182,13 +182,20 @@ export function submitTransaction({
 
     const transaction = createTransaction(payload, isoDate);
     transaction.date = resolveCreatedTransactionDate(transaction.date);
-    const result = await addTransaction(userId, token, { ...transaction, receiptFile: payload.receiptFile })
+    const result = await addTransaction(userId, token, { ...transaction, receiptFile: payload.receiptFile });
 
     if (!result.ok) {
       return result;
     }
 
-    dispatch(accountActions.applyTransactionCreated(transaction));
+    const { transactionsPage } = getState().account;
+    const refetchPromises: Promise<unknown>[] = [dispatch(loadDashboardData({ userId, token }))];
+    if (transactionsPage.request.status !== 'idle') {
+      refetchPromises.push(
+        dispatch(loadTransactionsPage({ userId, token, page: 1, limit: transactionsPage.pagination.limit }))
+      );
+    }
+    await Promise.all(refetchPromises);
 
     return { ok: true };
   };
@@ -233,7 +240,14 @@ export function deleteAccountTransaction({
       return result;
     }
 
-    dispatch(accountActions.applyTransactionDeleted(transactionToDelete));
+    const { transactionsPage } = getState().account;
+    const refetchPromises: Promise<unknown>[] = [dispatch(loadDashboardData({ userId, token }))];
+    if (transactionsPage.request.status !== 'idle') {
+      refetchPromises.push(
+        dispatch(loadTransactionsPage({ userId, token, page: transactionsPage.pagination.page, limit: transactionsPage.pagination.limit }))
+      );
+    }
+    await Promise.all(refetchPromises);
 
     return { ok: true };
   };
@@ -296,12 +310,14 @@ export function editAccountTransaction({
       return result;
     }
 
-    dispatch(
-      accountActions.applyTransactionUpdated({
-        previousTransaction: transactionToEdit,
-        nextTransaction,
-      })
-    );
+    const { transactionsPage } = getState().account;
+    const refetchPromises: Promise<unknown>[] = [dispatch(loadDashboardData({ userId, token }))];
+    if (transactionsPage.request.status !== 'idle') {
+      refetchPromises.push(
+        dispatch(loadTransactionsPage({ userId, token, page: transactionsPage.pagination.page, limit: transactionsPage.pagination.limit }))
+      );
+    }
+    await Promise.all(refetchPromises);
 
     return { ok: true };
   };
