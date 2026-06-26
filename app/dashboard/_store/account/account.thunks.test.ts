@@ -65,6 +65,10 @@ describe('account thunks', () => {
     fetchTransactionsMock.mockReset();
     updateTransactionMock.mockReset();
 
+    fetchAccountByUserIdMock.mockResolvedValue({
+      ok: true,
+      account: { balance: 250 },
+    });
     fetchTransactionsMock.mockResolvedValue({
       ok: true,
       transactions: paginatedTransactions,
@@ -122,40 +126,14 @@ describe('account thunks', () => {
     expect(addTransactionMock).not.toHaveBeenCalled();
   });
 
-  it('adiciona transação e atualiza saldo e resumo localmente quando a API aceita', async () => {
+  it('adiciona transação e refaz as requisições do servidor quando a API aceita', async () => {
     const store = makeDashboardStore();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-21T18:30:00.000Z'));
 
     store.dispatch(accountActions.hydrateAccount({ balance: 100 }));
-    store.dispatch(
-      accountActions.hydrateFinancialSummary({
-        balance: 100,
-        depositsTotal: 100,
-        transfersTotal: 0,
-      })
-    );
-    store.dispatch(
-      accountActions.hydrateLatestTransactions({
-        data: [
-          { id: 1, type: TransactionType.DEPOSIT, date: '2026-06-21T17:00:00.000Z', value: 10 },
-          { id: 2, type: TransactionType.DEPOSIT, date: '2026-06-21T16:00:00.000Z', value: 10 },
-          { id: 3, type: TransactionType.DEPOSIT, date: '2026-06-21T15:00:00.000Z', value: 10 },
-          { id: 4, type: TransactionType.DEPOSIT, date: '2026-06-21T14:00:00.000Z', value: 10 },
-          { id: 5, type: TransactionType.DEPOSIT, date: '2026-06-21T13:00:00.000Z', value: 10 },
-          { id: 6, type: TransactionType.DEPOSIT, date: '2026-06-21T12:00:00.000Z', value: 10 },
-        ],
-        pagination: {
-          page: 1,
-          limit: 6,
-          totalItems: 6,
-          totalPages: 1,
-          hasNextPage: false,
-          hasPreviousPage: false,
-        },
-      })
-    );
     addTransactionMock.mockResolvedValue({ ok: true });
+    fetchAccountByUserIdMock.mockResolvedValue({ ok: true, account: { balance: 150 } });
 
     const result = await store.dispatch(
       submitTransaction({
@@ -179,33 +157,21 @@ describe('account thunks', () => {
         date: '2026-06-21T18:30:00.000Z',
       })
     );
-    expect(fetchAccountByUserIdMock).not.toHaveBeenCalled();
-    expect(fetchTransactionsMock).not.toHaveBeenCalled();
-    expect(fetchFinancialSummaryMock).not.toHaveBeenCalled();
+    expect(fetchAccountByUserIdMock).toHaveBeenCalledWith(969, 'token-123');
+    expect(fetchTransactionsMock).toHaveBeenCalled();
+    expect(fetchFinancialSummaryMock).toHaveBeenCalled();
     expect(store.getState().account.data.balance).toBe(150);
     expect(store.getState().account.financialSummary.data).toMatchObject({
-      balance: 150,
-      depositsTotal: 150,
+      balance: 250,
+      depositsTotal: 250,
       transfersTotal: 0,
     });
-    expect(store.getState().account.latestTransactions.data[0]).toMatchObject({
-      type: TransactionType.DEPOSIT,
-      value: 50,
-      date: '2026-06-21T18:30:00.000Z',
-    });
-    expect(store.getState().account.latestTransactions.data).toHaveLength(6);
+    expect(store.getState().account.latestTransactions.data).toEqual(paginatedTransactions.data);
   });
 
-  it('edita transação e atualiza saldo, resumo e listas carregadas localmente', async () => {
+  it('edita transação e refaz as requisições do servidor quando a API aceita', async () => {
     const store = makeDashboardStore();
     store.dispatch(accountActions.hydrateAccount({ balance: 500 }));
-    store.dispatch(
-      accountActions.hydrateFinancialSummary({
-        balance: 500,
-        depositsTotal: 500,
-        transfersTotal: 0,
-      })
-    );
     store.dispatch(
       accountActions.hydrateLatestTransactions({
         data: [
@@ -227,6 +193,7 @@ describe('account thunks', () => {
       })
     );
     updateTransactionMock.mockResolvedValue({ ok: true });
+    fetchAccountByUserIdMock.mockResolvedValue({ ok: true, account: { balance: 360 } });
 
     const result = await store.dispatch(
       editAccountTransaction({
@@ -248,32 +215,16 @@ describe('account thunks', () => {
       1,
       expect.objectContaining({ type: TransactionType.TRANSFER, value: 40 })
     );
-    expect(fetchAccountByUserIdMock).not.toHaveBeenCalled();
-    expect(fetchTransactionsMock).not.toHaveBeenCalled();
-    expect(fetchFinancialSummaryMock).not.toHaveBeenCalled();
+    expect(fetchAccountByUserIdMock).toHaveBeenCalledWith(969, 'token-123');
+    expect(fetchTransactionsMock).toHaveBeenCalled();
+    expect(fetchFinancialSummaryMock).toHaveBeenCalled();
     expect(store.getState().account.data.balance).toBe(360);
-    expect(store.getState().account.financialSummary.data).toMatchObject({
-      balance: 360,
-      depositsTotal: 400,
-      transfersTotal: 40,
-    });
-    expect(store.getState().account.latestTransactions.data[0]).toMatchObject({
-      id: 1,
-      type: TransactionType.TRANSFER,
-      value: 40,
-    });
+    expect(store.getState().account.latestTransactions.data).toEqual(paginatedTransactions.data);
   });
 
-  it('exclui transação e atualiza saldo, resumo e listas carregadas localmente', async () => {
+  it('exclui transação e refaz as requisições do servidor quando a API aceita', async () => {
     const store = makeDashboardStore();
     store.dispatch(accountActions.hydrateAccount({ balance: 120 }));
-    store.dispatch(
-      accountActions.hydrateFinancialSummary({
-        balance: 120,
-        depositsTotal: 200,
-        transfersTotal: 80,
-      })
-    );
     store.dispatch(
       accountActions.hydrateLatestTransactions({
         data: [
@@ -295,6 +246,11 @@ describe('account thunks', () => {
       })
     );
     deleteTransactionMock.mockResolvedValue({ ok: true });
+    fetchAccountByUserIdMock.mockResolvedValue({ ok: true, account: { balance: 200 } });
+    fetchTransactionsMock.mockResolvedValue({
+      ok: true,
+      transactions: { data: [], pagination: { ...paginatedTransactions.pagination, totalItems: 0, totalPages: 0 } },
+    });
 
     const result = await store.dispatch(
       deleteAccountTransaction({
@@ -306,15 +262,10 @@ describe('account thunks', () => {
 
     expect(result).toEqual({ ok: true });
     expect(deleteTransactionMock).toHaveBeenCalledWith(969, 'token-123', 1);
-    expect(fetchAccountByUserIdMock).not.toHaveBeenCalled();
-    expect(fetchTransactionsMock).not.toHaveBeenCalled();
-    expect(fetchFinancialSummaryMock).not.toHaveBeenCalled();
+    expect(fetchAccountByUserIdMock).toHaveBeenCalledWith(969, 'token-123');
+    expect(fetchTransactionsMock).toHaveBeenCalled();
+    expect(fetchFinancialSummaryMock).toHaveBeenCalled();
     expect(store.getState().account.data.balance).toBe(200);
-    expect(store.getState().account.financialSummary.data).toMatchObject({
-      balance: 200,
-      depositsTotal: 200,
-      transfersTotal: 0,
-    });
     expect(store.getState().account.latestTransactions.data).toEqual([]);
   });
 

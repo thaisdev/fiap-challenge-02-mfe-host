@@ -52,6 +52,7 @@ describe('TransactionsPage', () => {
         status: 'idle',
         errorMessage: null,
       },
+      filters: {},
     });
   });
 

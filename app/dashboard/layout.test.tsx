@@ -18,6 +18,7 @@ vi.mock('next/navigation', () => ({
     replace: replaceMock,
     push: pushMock,
   }),
+  usePathname: () => '/dashboard',
 }));
 
 vi.mock('@/app/context/auth-session-context', () => ({

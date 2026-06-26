@@ -10,10 +10,6 @@ vi.mock('@/app/context/auth-session-context', () => ({
   useAuthSessionContext: useAuthSessionContextMock,
 }));
 
-vi.mock('../_components/new-transaction-panel', () => ({
-  NewTransactionPanel: () => <section>Mock NewTransactionPanel</section>,
-}));
-
 vi.mock('./_components/financial-visibility-panel', () => ({
   FinancialVisibilityPanel: () => <section>Mock FinancialVisibilityPanel</section>,
 }));
@@ -44,7 +40,6 @@ describe('HomeDashboardPage', () => {
 
     render(<HomeDashboardPage />);
 
-    expect(screen.getByText('Mock NewTransactionPanel')).toBeInTheDocument();
     expect(screen.getByText('Mock FinancialVisibilityPanel')).toBeInTheDocument();
   });
 });

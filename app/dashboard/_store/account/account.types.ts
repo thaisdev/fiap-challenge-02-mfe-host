@@ -1,5 +1,5 @@
 import type { Transaction } from '../../_components/interfaces/statement-panel.interfaces';
-import type { TransactionsPagination } from '../../_services/transaction-service';
+import type { TransactionFilters, TransactionsPagination } from '../../_services/transaction-service';
 
 export type AccountRequestStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -19,6 +19,7 @@ export type TransactionsState = {
 
 export type PaginatedTransactionsState = TransactionsState & {
   pagination: TransactionsPagination;
+  filters: TransactionFilters;
 };
 
 export type FinancialSummaryState = {

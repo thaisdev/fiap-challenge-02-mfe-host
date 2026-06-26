@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { EditStatementEntryModal } from './edit-statement-entry-modal';
+import { TransactionModal } from './transaction-modal';
 import { TransactionType } from './interfaces/statement-panel.interfaces';
 
 const baseEntry = {
@@ -10,10 +10,10 @@ const baseEntry = {
   value: 150,
 };
 
-describe('EditStatementEntryModal', () => {
+describe('TransactionModal — modo edição', () => {
   it('preenche formulario com valores iniciais do lancamento', () => {
     render(
-      <EditStatementEntryModal
+      <TransactionModal
         entry={{
           ...baseEntry,
           type: TransactionType.TRANSFER,
@@ -37,19 +37,19 @@ describe('EditStatementEntryModal', () => {
 
     try {
       const { rerender } = render(
-        <EditStatementEntryModal entry={{ ...baseEntry, date: 'data-invalida' }} onClose={vi.fn()} />
+        <TransactionModal entry={{ ...baseEntry, date: 'data-invalida' }} onClose={vi.fn()} />
       );
 
       expect(screen.getByLabelText('Data')).toHaveValue('2026-04-21');
 
       rerender(
-        <EditStatementEntryModal entry={{ ...baseEntry, date: '21/04' }} onClose={vi.fn()} />
+        <TransactionModal entry={{ ...baseEntry, date: '21/04' }} onClose={vi.fn()} />
       );
 
       expect(screen.getByLabelText('Data')).toHaveValue('2026-04-21');
 
       rerender(
-        <EditStatementEntryModal entry={{ ...baseEntry, date: '21/04/aaaa' }} onClose={vi.fn()} />
+        <TransactionModal entry={{ ...baseEntry, date: '21/04/aaaa' }} onClose={vi.fn()} />
       );
 
       expect(screen.getByLabelText('Data')).toHaveValue('2026-04-21');
@@ -62,13 +62,11 @@ describe('EditStatementEntryModal', () => {
     const onClose = vi.fn();
     const onSubmit = vi.fn();
 
-    render(<EditStatementEntryModal entry={baseEntry} onClose={onClose} onSubmit={onSubmit} />);
+    render(<TransactionModal entry={baseEntry} onClose={onClose} onSubmit={onSubmit} />);
 
     const submitButton = screen.getByRole('button', { name: /Salvar/i });
     const form = submitButton.closest('form');
-    if (!form) {
-      throw new Error('Formulario nao encontrado');
-    }
+    if (!form) throw new Error('Formulario nao encontrado');
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Valor' }), {
       target: { value: '0' },
@@ -83,7 +81,7 @@ describe('EditStatementEntryModal', () => {
   it('fecha no clique do backdrop e ignora clique interno', () => {
     const onClose = vi.fn();
 
-    render(<EditStatementEntryModal entry={baseEntry} onClose={onClose} />);
+    render(<TransactionModal entry={baseEntry} onClose={onClose} />);
 
     fireEvent.click(screen.getByText(/Editar trans/i));
     expect(onClose).not.toHaveBeenCalled();
@@ -98,7 +96,7 @@ describe('EditStatementEntryModal', () => {
       message: 'Saldo insuficiente para concluir a transferência.',
     }));
 
-    render(<EditStatementEntryModal entry={baseEntry} onClose={vi.fn()} onSubmit={onSubmit} />);
+    render(<TransactionModal entry={baseEntry} onClose={vi.fn()} onSubmit={onSubmit} />);
 
     fireEvent.change(screen.getByLabelText('Data'), {
       target: { value: '2026-04-21' },
@@ -115,7 +113,47 @@ describe('EditStatementEntryModal', () => {
   it('fecha com tecla Escape, botao fechar e cancelar', () => {
     const onClose = vi.fn();
 
-    render(<EditStatementEntryModal entry={baseEntry} onClose={onClose} />);
+    render(<TransactionModal entry={baseEntry} onClose={onClose} />);
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: /Fechar/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+
+    expect(onClose).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('TransactionModal — modo novo', () => {
+  it('renderiza titulo e botao corretos no modo novo', () => {
+    render(<TransactionModal onClose={vi.fn()} />);
+
+    expect(screen.getByText('Nova transação')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Adicionar' })).toBeInTheDocument();
+  });
+
+  it('exibe placeholder no select de tipo no modo novo', () => {
+    render(<TransactionModal onClose={vi.fn()} />);
+
+    expect(screen.getByRole('combobox', { name: /Tipo de trans/i })).toHaveValue('');
+  });
+
+  it('nao envia submit quando tipo nao foi selecionado', () => {
+    const onClose = vi.fn();
+    const onSubmit = vi.fn();
+
+    render(<TransactionModal onClose={onClose} onSubmit={onSubmit} />);
+
+    const submitButton = screen.getByRole('button', { name: 'Adicionar' });
+    fireEvent.submit(submitButton.closest('form')!);
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('fecha com tecla Escape, botao fechar e cancelar', () => {
+    const onClose = vi.fn();
+
+    render(<TransactionModal onClose={onClose} />);
 
     fireEvent.keyDown(window, { key: 'Escape' });
     fireEvent.click(screen.getByRole('button', { name: /Fechar/i }));
