@@ -107,14 +107,15 @@ export function loadTransactionsPage({
   token,
   page = 1,
   limit = 10,
+  transactionId,
   startDate,
   endDate,
   type,
 }: AccountSessionParams & Partial<TransactionPaginationQuery> & TransactionFilters): AppThunk<Promise<void>> {
   return async (dispatch) => {
-    dispatch(accountActions.setTransactionsPageLoading({ page, limit, startDate, endDate, type }));
+    dispatch(accountActions.setTransactionsPageLoading({ page, limit, transactionId, startDate, endDate, type }));
 
-    const result = await fetchTransactions(userId, token, { page, limit, startDate, endDate, type });
+    const result = await fetchTransactions(userId, token, { page, limit, transactionId, startDate, endDate, type });
 
     if (result.ok) {
       dispatch(accountActions.hydrateTransactionsPage(result.transactions));
