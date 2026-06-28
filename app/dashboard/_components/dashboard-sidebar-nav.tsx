@@ -1,4 +1,6 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { redirect, usePathname } from 'next/navigation';
 import { useState } from 'react';
 
 export type DashboardTabKey =
@@ -17,21 +19,20 @@ export type DashboardSidebarItem = {
 
 type DashboardSidebarNavProps = {
   items: readonly DashboardSidebarItem[];
-  activeItem: DashboardTabKey;
-  onChange: (key: DashboardTabKey) => void;
 };
 
-export function DashboardSidebarNav({ items, activeItem, onChange }: DashboardSidebarNavProps) {
+function isItemActive(pathname: string, item: DashboardSidebarItem): boolean {
+  if (item.link === '/dashboard') return pathname === '/dashboard';
+  return pathname.startsWith(item.link);
+}
+
+export function DashboardSidebarNav({ items }: DashboardSidebarNavProps) {
+  const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSelectItem = (item: DashboardSidebarItem) => {
-    if (item.disabled) {
-      return;
-    }
-
-    onChange(item.key);
+    if (item.disabled) return;
     setIsMobileMenuOpen(false);
-
     redirect(item.link);
   };
 
@@ -51,7 +52,7 @@ export function DashboardSidebarNav({ items, activeItem, onChange }: DashboardSi
         </button>
 
         {isMobileMenuOpen ? (
-          <div className="absolute left-0 top-0 z-20 w-[142px] border border-border bg-surface px-3 py-2 shadow-md">
+          <div className="absolute left-0 top-0 z-20 w-50 border border-border bg-surface px-3 py-2 shadow-md">
             <button
               type="button"
               aria-label="Fechar menu de serviços"
@@ -64,7 +65,7 @@ export function DashboardSidebarNav({ items, activeItem, onChange }: DashboardSi
             <ul className="space-y-0 pr-3">
               {items.map((item) => {
                 const isDisabled = Boolean(item.disabled);
-                const isActive = item.key === activeItem && !isDisabled;
+                const isActive = isItemActive(pathname, item) && !isDisabled;
 
                 return (
                   <li key={item.key}>
@@ -94,7 +95,7 @@ export function DashboardSidebarNav({ items, activeItem, onChange }: DashboardSi
       <ul className="hidden md:flex md:flex-wrap md:items-center md:gap-8 md:border-b md:border-secondary/40 md:pb-2 desktop:h-full desktop:w-full desktop:flex-col desktop:items-stretch desktop:gap-0 desktop:rounded-md desktop:border desktop:border-border desktop:bg-surface desktop:px-5 desktop:py-4 desktop:shadow-sm desktop:border-b-0">
         {items.map((item) => {
           const isDisabled = Boolean(item.disabled);
-          const isActive = item.key === activeItem && !isDisabled;
+          const isActive = isItemActive(pathname, item) && !isDisabled;
 
           return (
             <li

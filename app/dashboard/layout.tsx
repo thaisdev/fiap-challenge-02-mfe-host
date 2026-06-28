@@ -4,18 +4,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthSessionProvider, useAuthSessionContext } from '@/app/context/auth-session-context';
 import { clearAuthSession } from '@/app/lib/auth-session';
-import { AccountProvider, useAccountContext } from './_state/account-context';
 import { AccountSummaryCard } from './_components/account-summary-card';
 import { DashboardHeader } from './_components/dashboard-header';
 import { Alert } from '@/components/ui/alert';
-import { getTimestampFromTransactionDate } from './_utils/transaction-date';
+import { DashboardStoreProvider } from './_store/redux-provider';
 import {
   DashboardSidebarItem,
   DashboardSidebarNav,
-  type DashboardTabKey,
 } from './_components/dashboard-sidebar-nav';
 import { StatementPanel } from './_components/statement-panel';
 import { ReactNode } from 'react';
+import { useAccount, useAccountActions } from './_store/account/account.hooks';
 
 const sidebarItems: readonly DashboardSidebarItem[] = [
   { key: 'home', label: 'Início', link: '/dashboard' },
@@ -52,42 +51,21 @@ function formatCurrentDateLabel() {
 
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { session } = useAuthSessionContext();
-  const { balance, transactions, errorMessage } = useAccountContext();
+  const { balance, transactions, request } = useAccount();
+  const { reloadAccount } = useAccountActions();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<DashboardTabKey>('home');
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
   const [isErrorVisible, setIsErrorVisible] = useState(true);
   const currentDateLabel = useMemo(() => formatCurrentDateLabel(), []);
+
+  useEffect(() => {
+    void reloadAccount();
+  }, [reloadAccount]);
 
   const handleLogout = () => {
     clearAuthSession();
     router.push('/home/login');
   };
-
-  const orderedTransactions = useMemo(() => {
-    return [...transactions].sort((transactionA, transactionB) => {
-      const timestampA = getTimestampFromTransactionDate(transactionA.date);
-      const timestampB = getTimestampFromTransactionDate(transactionB.date);
-
-      if (timestampA === null && timestampB === null) {
-        return 0;
-      }
-
-      if (timestampA === null) {
-        return 1;
-      }
-
-      if (timestampB === null) {
-        return -1;
-      }
-
-      return timestampB - timestampA;
-    });
-  }, [transactions]);
-
-  const visibleTransactions = useMemo(() => {
-    return orderedTransactions.slice(0, 6);
-  }, [orderedTransactions]);
 
   if (!session) {
     return null;
@@ -101,26 +79,22 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       <DashboardHeader userName={name} onLogout={handleLogout} />
       <main className="flex-1">
         <div className="mx-auto w-full max-w-[688px] px-4 pb-10 pt-8 md:pb-10 md:pt-10 desktop:max-w-[1140px] desktop:px-0 desktop:pb-8 desktop:pt-4">
-          {errorMessage && isErrorVisible ? (
+          {request.errorMessage && isErrorVisible ? (
             <div className="pb-6">
               <Alert
                 variant="error"
-                message={errorMessage}
+                message={request.errorMessage}
                 onClose={() => setIsErrorVisible(false)}
               />
             </div>
           ) : null}
 
-          <div className="grid gap-6 desktop:grid-cols-[142px_minmax(0,1fr)_240px] desktop:items-stretch desktop:gap-4">
+          <div className="grid gap-6 desktop:grid-cols-[200px_minmax(0,1fr)_300px] desktop:items-stretch desktop:gap-4">
             <div className="desktop:flex desktop:h-full">
-              <DashboardSidebarNav
-                items={sidebarItems}
-                activeItem={activeTab}
-                onChange={setActiveTab}
-              />
+              <DashboardSidebarNav items={sidebarItems} />
             </div>
 
-            <div className="space-y-6 desktop:col-start-2 desktop:min-w-0 desktop:space-y-3">
+            <div className="min-w-0 space-y-6 desktop:col-start-2 desktop:space-y-3">
               <AccountSummaryCard
                 name={userFirstName}
                 dateLabel={currentDateLabel}
@@ -133,8 +107,8 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
               {children}
             </div>
 
-            <div className="desktop:col-start-3 desktop:flex desktop:h-full">
-              <StatementPanel title="Extrato" entries={visibleTransactions} />
+            <div className="w-full max-w-75 desktop:col-start-3 desktop:flex desktop:h-full desktop:max-w-none">
+              <StatementPanel title="Extrato" entries={transactions} viewAllHref="/dashboard/transactions" />
             </div>
           </div>
         </div>
@@ -157,17 +131,15 @@ function AuthGuard({ children }: { children: ReactNode }) {
     return null;
   }
 
-  return (
-    <AccountProvider session={session}>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </AccountProvider>
-  );
+  return <DashboardLayoutContent>{children}</DashboardLayoutContent>;
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthSessionProvider>
-      <AuthGuard>{children}</AuthGuard>
+      <DashboardStoreProvider>
+        <AuthGuard>{children}</AuthGuard>
+      </DashboardStoreProvider>
     </AuthSessionProvider>
   );
 }

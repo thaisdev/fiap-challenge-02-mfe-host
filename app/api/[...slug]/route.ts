@@ -22,17 +22,32 @@ async function handleProxy(request: NextRequest, slug: string[]): Promise<Respon
     const value = request.headers.get(key)
     if (value) headers.set(key, value)
   }
+  headers.set('accept-encoding', 'identity')
 
   const hasBody = request.method !== 'GET' && request.method !== 'HEAD'
 
   try {
-    const response = await fetch(upstreamUrl, {
+    const upstream = await fetch(upstreamUrl, {
       method: request.method,
       headers,
       ...(hasBody ? { body: request.body, duplex: 'half' } : {}),
     } as RequestInit)
 
-    return response
+    // Node's fetch auto-decompresses gzip/br bodies, so strip encoding headers
+    // to prevent the browser from trying to decompress an already-decoded body.
+    const HOP_BY_HOP = new Set(['content-encoding', 'transfer-encoding', 'connection', 'keep-alive'])
+    const responseHeaders = new Headers()
+    for (const [key, value] of upstream.headers.entries()) {
+      if (!HOP_BY_HOP.has(key.toLowerCase())) {
+        responseHeaders.set(key, value)
+      }
+    }
+
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers: responseHeaders,
+    })
   } catch {
     return new Response('Gateway error', { status: 502 })
   }

@@ -1,0 +1,15 @@
+.git
+.gitignore
+.next
+node_modules
+coverage
+.storybook
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+.env
+.env.local
+.env*.local
+README.md
+Dockerfile
+.dockerignore

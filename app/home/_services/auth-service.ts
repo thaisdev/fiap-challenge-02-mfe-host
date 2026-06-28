@@ -1,3 +1,4 @@
+import { ReceiptFile } from '@/app/dashboard/_components/interfaces/new-transaction-panel.interfaces';
 import { TransactionType } from '@/app/dashboard/_components/interfaces/transaction.interfaces';
 
 type ServiceMessageResponse = {
@@ -16,11 +17,11 @@ export type AuthTransaction = {
   type: TransactionType;
   date: string;
   value: number;
+  receiptFile?: ReceiptFile | null;
 };
 
 export type AuthAccount = {
   balance: number;
-  transactions: AuthTransaction[];
 };
 
 export type AuthenticatedUser = {
@@ -98,7 +99,7 @@ async function postJson(
   } catch {
     return {
       ok: false,
-      message: 'Erro de conexao. Tente novamente em instantes.',
+      message: 'Erro de conexão. Tente novamente em instantes.',
       body: null,
     };
   }
@@ -110,21 +111,6 @@ type LoginUser = {
   email: string;
 };
 
-function isAuthTransaction(value: unknown): value is AuthTransaction {
-  if (!value || typeof value !== 'object') {
-    return false;
-  }
-
-  const transaction = value as Record<string, unknown>;
-
-  return (
-    typeof transaction.id === 'number' &&
-    (transaction.type === TransactionType.DEPOSIT || transaction.type === TransactionType.TRANSFER) &&
-    typeof transaction.date === 'string' &&
-    typeof transaction.value === 'number'
-  );
-}
-
 function isAuthAccount(value: unknown): value is AuthAccount {
   if (!value || typeof value !== 'object') {
     return false;
@@ -132,11 +118,7 @@ function isAuthAccount(value: unknown): value is AuthAccount {
 
   const account = value as Record<string, unknown>;
 
-  return (
-    typeof account.balance === 'number' &&
-    Array.isArray(account.transactions) &&
-    account.transactions.every(isAuthTransaction)
-  );
+  return typeof account.balance === 'number';
 }
 
 function isLoginUser(value: unknown): value is LoginUser {
@@ -147,9 +129,7 @@ function isLoginUser(value: unknown): value is LoginUser {
   const user = value as Record<string, unknown>;
 
   return (
-    typeof user.id === 'number' &&
-    typeof user.name === 'string' &&
-    typeof user.email === 'string'
+    typeof user.id === 'number' && typeof user.name === 'string' && typeof user.email === 'string'
   );
 }
 
@@ -157,7 +137,7 @@ export async function fetchAccountByUserId(
   userId: number,
   token: string
 ): Promise<{ ok: true; account: AuthAccount } | { ok: false; message: string }> {
-  const fallbackErrorMessage = 'Nao foi possivel autenticar. Revise seus dados.';
+  const fallbackErrorMessage = 'Não foi possível autenticar. Revise seus dados.';
 
   try {
     const response = await fetch(`/api/users/${userId}/account`, {
@@ -189,20 +169,22 @@ export async function fetchAccountByUserId(
 
     return {
       ok: true,
-      account: body,
+      account: {
+        balance: body.balance,
+      },
     };
   } catch {
     return {
       ok: false,
-      message: 'Erro de conexao. Tente novamente em instantes.',
+      message: 'Erro de conexão. Tente novamente em instantes.',
     };
   }
 }
 
 export async function registerAccount(payload: RegisterAccountPayload) {
   const result = await postJson(`/api/users`, payload, {
-    fallbackSuccessMessage: 'Usuario criado com sucesso.',
-    fallbackErrorMessage: 'Nao foi possivel criar a conta. Tente novamente.',
+    fallbackSuccessMessage: 'Usuário criado com sucesso.',
+    fallbackErrorMessage: 'Não foi possível criar a conta. Tente novamente.',
   });
 
   return {
@@ -214,7 +196,7 @@ export async function registerAccount(payload: RegisterAccountPayload) {
 export async function loginAccount(payload: LoginAccountPayload) {
   const result = await postJson(`/api/login`, payload, {
     fallbackSuccessMessage: 'Login realizado com sucesso.',
-    fallbackErrorMessage: 'Nao foi possivel autenticar. Revise seus dados.',
+    fallbackErrorMessage: 'Não foi possível autenticar. Revise seus dados.',
   });
 
   if (!result.ok || typeof result.body?.token !== 'string' || !isLoginUser(result.body.user)) {

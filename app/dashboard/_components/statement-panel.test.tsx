@@ -6,9 +6,11 @@ import { TransactionType } from './interfaces/statement-panel.interfaces';
 const onDeleteTransactionMock = vi.fn();
 const onEditTransactionMock = vi.fn();
 
-vi.mock('../_state/account-context', () => ({
-  useAccountContext: () => ({
+vi.mock('../_store/account/account.hooks', () => ({
+  useAccount: () => ({
     transactions: [],
+  }),
+  useAccountActions: () => ({
     onDeleteTransaction: onDeleteTransactionMock,
     onEditTransaction: onEditTransactionMock,
   }),
@@ -17,7 +19,7 @@ vi.mock('../_state/account-context', () => ({
 function getEntryByDate(date: string) {
   const entry = screen.getByText(date).closest('li');
   if (!entry) {
-    throw new Error(`Lancamento nao encontrado para data ${date}`);
+    throw new Error(`Lançamento não encontrado para data ${date}`);
   }
 
   return entry;
@@ -86,6 +88,12 @@ describe('StatementPanel', () => {
     expect(screen.queryByRole('button', { name: 'Excluir extrato' })).not.toBeInTheDocument();
   });
 
+  it('respeita lista vazia enviada por props e mostra estado vazio', () => {
+    render(<StatementPanel entries={[]} />);
+
+    expect(screen.getByText('Nenhuma transação encontrada.')).toBeInTheDocument();
+  });
+
   it('abre modal de edicao e envia payload completo de tipo, valor e data', async () => {
     render(
       <StatementPanel
@@ -120,11 +128,14 @@ describe('StatementPanel', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Salvar edi/i }));
 
-    expect(onEditTransactionMock).toHaveBeenCalledWith({
-      transactionId: 1,
-      type: TransactionType.TRANSFER,
-      value: 700,
-      transactionDate: '2026-04-22',
+    await waitFor(() => {
+      expect(onEditTransactionMock).toHaveBeenCalledWith({
+        transactionId: 1,
+        type: TransactionType.TRANSFER,
+        value: 700,
+        transactionDate: '2026-04-22',
+        receiptFile: null,
+      });
     });
 
     await waitFor(() => {
@@ -135,7 +146,7 @@ describe('StatementPanel', () => {
   it('mantem modal aberto e mostra alerta quando a edicao retorna erro', async () => {
     onEditTransactionMock.mockResolvedValue({
       ok: false as const,
-      message: 'Saldo insuficiente para concluir a transferencia.',
+      message: 'Saldo insuficiente para concluir a transferência.',
     });
 
     render(
@@ -144,21 +155,23 @@ describe('StatementPanel', () => {
           {
             id: 1,
             type: TransactionType.DEPOSIT,
-            date: '2022-11-18T12:00:00.000Z',
+            date: '2026-01-15T12:00:00.000Z',
             value: 150,
           },
         ]}
       />
     );
 
-    fireEvent.click(getEntryByDate('18/11/2022'));
+    fireEvent.click(getEntryByDate('15/01/2026'));
     fireEvent.click(screen.getByRole('button', { name: 'Editar extrato' }));
     fireEvent.change(screen.getByLabelText('Data'), {
       target: { value: '2026-04-21' },
     });
     fireEvent.click(screen.getByRole('button', { name: /Salvar edi/i }));
 
-    expect(onEditTransactionMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(onEditTransactionMock).toHaveBeenCalledTimes(1);
+    });
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Saldo insuficiente');

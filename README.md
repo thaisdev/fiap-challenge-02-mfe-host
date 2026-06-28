@@ -49,7 +49,7 @@ A aplicação depende de uma API REST externa. Você tem duas opções:
 
 **Opção A — Usar a API publicada (mais rápido)**
 
-A API já está disponível publicamente em **http://3.148.238.85:3333**. Basta configurar a variável de ambiente apontando para esse endereço (veja o passo 3).
+A API já está disponível publicamente em **http://3.131.169.219:3333**. Basta configurar a variável de ambiente apontando para esse endereço (veja o passo 3).
 
 **Opção B — Rodar a API localmente**
 
@@ -65,19 +65,47 @@ A API ficará disponível em **http://localhost:3333**.
 
 ### 3. Variáveis de ambiente
 
-Crie um arquivo `.env` na raiz do projeto com o conteúdo adequado à opção escolhida:
+Copie o arquivo de exemplo e ajuste os valores:
 
-- **API publicada:**
-
-```env
-API_URL=http://3.148.238.85:3333
+```bash
+cp .env.example .env
 ```
 
-- **API local:**
+Abaixo a descrição de cada variável:
+
+**`API_URL`** — endereço da API REST.
+
+- API publicada: `http://3.131.169.219:3333`
+- API local: `http://localhost:3333`
+
+**`NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL`** — URL do microfrontend Angular de visibilidade financeira.
+
+**Opção A — Usar o microfrontend publicado (mais rápido)**
+
+O microfrontend já está disponível publicamente. Configure a variável com a URL de produção:
 
 ```env
-API_URL=http://localhost:3333
+NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL=https://d102z2e77k7t5v.cloudfront.net/remoteEntry.json
 ```
+
+**Opção B — Rodar o microfrontend localmente**
+
+Clone o repositório e siga as instruções do README dele:
+
+```bash
+git clone https://github.com/guiizis/angular-mfe-tech-challenge-2
+```
+
+Após iniciar, o microfrontend ficará disponível em `http://localhost:4201/remoteEntry.json`. Configure a variável com esse valor:
+
+```env
+NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL=http://localhost:4201/remoteEntry.json
+```
+
+**`BLOB_READ_WRITE_TOKEN`** — token de acesso ao [Vercel Blob](https://vercel.com/docs/storage/vercel-blob).
+
+- Se preenchido, os comprovantes de transação serão enviados para o Vercel Blob.
+- Se deixado vazio, os arquivos serão salvos localmente na pasta `uploads/` (ignorada pelo git) e servidos via `/api/blob?file=<nome>`.
 
 ### 4. Instalação das dependências
 
@@ -106,6 +134,62 @@ Acesse: http://localhost:6006
 ```bash
 npm run test
 ```
+
+---
+
+## Como rodar o projeto com Docker
+
+### Pré-requisitos
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado e em execução
+
+### 1. Build da imagem
+
+Na raiz do projeto, execute:
+
+```bash
+docker build -t mcintosh-bank .
+```
+
+### 2. Subindo o container
+
+Escolha a opção de acordo com onde a API está rodando e como deseja armazenar os comprovantes.
+
+**Com API publicada e Vercel Blob:**
+
+```bash
+docker run \
+  -e API_URL=http://3.131.169.219:3333 \
+  -e BLOB_READ_WRITE_TOKEN=<seu_token> \
+  -p 3000:3000 \
+  mcintosh-bank
+```
+
+**Com API publicada e armazenamento local (sem Vercel Blob):**
+
+```bash
+docker run \
+  -e API_URL=http://3.131.169.219:3333 \
+  -v uploads:/app/uploads \
+  -p 3000:3000 \
+  mcintosh-bank
+```
+
+> O volume `-v uploads:/app/uploads` persiste os arquivos enviados entre reinicializações do container. Sem ele, os uploads serão perdidos ao recriar o container.
+
+**Com API rodando localmente:**
+
+```bash
+docker run \
+  -e API_URL=http://host.docker.internal:3333 \
+  -e BLOB_READ_WRITE_TOKEN=<seu_token> \
+  -p 3000:3000 \
+  mcintosh-bank
+```
+
+> `host.docker.internal` é o hostname especial do Docker Desktop que aponta para a máquina host. Não use `localhost` dentro do container, pois ele se refere ao próprio container.
+
+Acesse: http://localhost:3000
 
 ---
 

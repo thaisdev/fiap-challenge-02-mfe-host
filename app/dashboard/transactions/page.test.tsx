@@ -1,10 +1,17 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TransactionsPage from './page';
 
-const { useAuthSessionContextMock, statementPanelMock } = vi.hoisted(() => ({
-  useAuthSessionContextMock: vi.fn(),
+const {
+  reloadTransactionsPageMock,
+  statementPanelMock,
+  useAuthSessionContextMock,
+  useTransactionsPageMock,
+} = vi.hoisted(() => ({
+  reloadTransactionsPageMock: vi.fn(),
   statementPanelMock: vi.fn(),
+  useAuthSessionContextMock: vi.fn(),
+  useTransactionsPageMock: vi.fn(),
 }));
 
 vi.mock('@/app/context/auth-session-context', () => ({
@@ -18,10 +25,35 @@ vi.mock('../_components/statement-panel', () => ({
   },
 }));
 
+vi.mock('../_store/account/account.hooks', () => ({
+  useAccountActions: () => ({
+    reloadTransactionsPage: reloadTransactionsPageMock,
+  }),
+  useTransactionsPage: useTransactionsPageMock,
+}));
+
 describe('TransactionsPage', () => {
   beforeEach(() => {
+    reloadTransactionsPageMock.mockReset();
+    reloadTransactionsPageMock.mockResolvedValue(undefined);
     useAuthSessionContextMock.mockReset();
     statementPanelMock.mockReset();
+    useTransactionsPageMock.mockReturnValue({
+      data: [],
+      pagination: {
+        page: 1,
+        limit: 10,
+        totalItems: 0,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+      request: {
+        status: 'idle',
+        errorMessage: null,
+      },
+      filters: {},
+    });
   });
 
   it('nao renderiza conteudo quando nao existe sessao', () => {
@@ -33,9 +65,10 @@ describe('TransactionsPage', () => {
 
     expect(container).toBeEmptyDOMElement();
     expect(statementPanelMock).not.toHaveBeenCalled();
+    expect(reloadTransactionsPageMock).not.toHaveBeenCalled();
   });
 
-  it('renderiza o painel de transacoes com o titulo e aria-label esperados', () => {
+  it('renderiza o painel de transações e carrega a primeira página', async () => {
     useAuthSessionContextMock.mockReturnValue({
       session: {
         user: {
@@ -47,9 +80,15 @@ describe('TransactionsPage', () => {
     render(<TransactionsPage />);
 
     expect(screen.getByText('Mock StatementPanel')).toBeInTheDocument();
-    expect(statementPanelMock).toHaveBeenCalledWith({
-      title: 'Transações',
-      ariaLabel: 'Painel de transações',
+    expect(statementPanelMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Transações',
+        ariaLabel: 'Painel de transações',
+      })
+    );
+
+    await waitFor(() => {
+      expect(reloadTransactionsPageMock).toHaveBeenCalledWith({ page: 1, limit: 10 });
     });
   });
 });
