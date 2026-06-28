@@ -1,7 +1,7 @@
 ﻿'use client';
 import { useState } from 'react';
 import { ServiceUnderConstructionModal } from './service-under-construction-modal';
-import { Button } from './button'; // caminho corrigido
+import { Button } from "@/components/ui/button";
 
 type ServiceOption = {
   id: string;
@@ -16,6 +16,7 @@ const serviceOptions: readonly ServiceOption[] = [
   { id: 'insurance', label: 'Seguros' },
   { id: 'mobile-top-up', label: 'Crédito celular' },
 ];
+
 const readyServices = ['my-cards'];
 
 export function OtherServicesPanel() {
@@ -45,8 +46,10 @@ export function OtherServicesPanel() {
             </div>
 
             <div className="flex flex-col flex-1 items-stretch">
-              <Button styleType="primary">Configurar</Button>
-              <Button styleType="secondary" className="mt-3">
+              <Button variant="solid" tone="accent" className="cursor-pointer transition-transform hover:scale-105">
+                Configurar
+              </Button>
+              <Button variant="outline" tone="error" className="mt-3 cursor-pointer transition-transform hover:scale-105">
                 Bloquear
               </Button>
               <p className="mt-4 text-sm text-center text-gray-700">Função: Débito/Crédito</p>
@@ -63,8 +66,10 @@ export function OtherServicesPanel() {
             </div>
 
             <div className="flex flex-col flex-1 items-stretch">
-              <Button styleType="primary">Configurar</Button>
-              <Button styleType="secondary" className="mt-3">
+              <Button variant="solid" tone="accent" className="cursor-pointer transition-transform hover:scale-105">
+                Configurar
+              </Button>
+              <Button variant="outline" tone="error" className="mt-3 cursor-pointer transition-transform hover:scale-105">
                 Bloquear
               </Button>
               <p className="mt-4 text-sm text-center text-gray-700">Função: Débito/Crédito</p>
@@ -72,7 +77,7 @@ export function OtherServicesPanel() {
           </div>
 
           <div className="mt-6">
-            <Button styleType="primary" onClick={() => setActiveService(null)}>
+            <Button variant="solid" tone="accent" onClick={() => setActiveService(null)} className="cursor-pointer transition-transform hover:scale-105">
               Voltar
             </Button>
           </div>
@@ -92,7 +97,7 @@ export function OtherServicesPanel() {
                 <button
                   type="button"
                   onClick={() => handleServiceClick(option)}
-                  className="flex h-full w-full items-center justify-center rounded-md p-4"
+                  className="flex h-full w-full items-center justify-center rounded-md p-4 cursor-pointer transition-transform hover:scale-105"
                 >
                   <span className="text-body-md font-semibold text-heading">{option.label}</span>
                 </button>
