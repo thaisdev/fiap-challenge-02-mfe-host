@@ -137,6 +137,19 @@ describe('TransactionModal — modo novo', () => {
     expect(screen.getByRole('combobox', { name: /Tipo de trans/i })).toHaveValue('');
   });
 
+  it('seleciona transferencia quando o valor recebe o sinal de menos', () => {
+    render(<TransactionModal onClose={vi.fn()} />);
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Valor' }), {
+      target: { value: '-100' },
+    });
+
+    expect(screen.getByRole('combobox', { name: /Tipo de trans/i })).toHaveValue(
+      TransactionType.TRANSFER
+    );
+    expect(screen.getByRole('textbox', { name: 'Valor' })).toHaveValue('1,00');
+  });
+
   it('nao envia submit quando tipo nao foi selecionado', () => {
     const onClose = vi.fn();
     const onSubmit = vi.fn();

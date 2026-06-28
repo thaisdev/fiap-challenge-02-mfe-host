@@ -98,6 +98,16 @@ export function TransactionModal(props: TransactionModalProps) {
     receiptFileRef.current = null;
   };
 
+  const handleAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const inputValue = event.currentTarget.value;
+
+    if (inputValue.includes('-')) {
+      setTransactionType(TransactionType.TRANSFER);
+    }
+
+    setTransactionAmount(formatCurrencyInput(inputValue));
+  };
+
   const handleSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     setFeedback(null);
@@ -212,9 +222,7 @@ export function TransactionModal(props: TransactionModalProps) {
             type="text"
             inputMode="numeric"
             value={transactionAmount}
-            onChange={(event) =>
-              setTransactionAmount(formatCurrencyInput(event.currentTarget.value))
-            }
+            onChange={handleAmountChange}
             required
             containerClassName="mt-6"
             labelClassName="mb-2 text-body-sm font-semibold text-body"
