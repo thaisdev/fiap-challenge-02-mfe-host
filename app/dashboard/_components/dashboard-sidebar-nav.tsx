@@ -22,8 +22,7 @@ type DashboardSidebarNavProps = {
 };
 
 function isItemActive(pathname: string, item: DashboardSidebarItem): boolean {
-  if (item.link === '/dashboard') return pathname === '/dashboard';
-  return pathname.startsWith(item.link);
+  return pathname === item.link || pathname.startsWith(item.link + '/');
 }
 
 export function DashboardSidebarNav({ items }: DashboardSidebarNavProps) {

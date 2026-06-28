@@ -12,11 +12,11 @@ import {
 } from "./transaction-date";
 
 describe("transaction-date utils", () => {
-  it("gera range com ano atual e ano anterior", () => {
+  it("gera range com ano anterior como minDate e data atual como maxDate", () => {
     const range = getTransactionDateRange(new Date("2026-04-19T12:00:00.000Z"));
 
     expect(range.minDate).toBe("2025-01-01");
-    expect(range.maxDate).toBe("2026-12-31");
+    expect(range.maxDate).toBe("2026-04-19");
   });
 
   it("retorna data padrao no formato ISO do input", () => {

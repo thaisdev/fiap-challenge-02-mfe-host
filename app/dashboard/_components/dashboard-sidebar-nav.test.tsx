@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 const items = [
-  { key: 'home', label: 'Início', link: '/dashboard' },
+  { key: 'home', label: 'Início', link: '/dashboard/home' },
   { key: 'my-cards', label: 'Meus cartões', link: '/dashboard/my-cards' },
   { key: 'transactions', label: 'Transações', link: '/dashboard/transactions', disabled: true },
   { key: 'investments', label: 'Investimentos', link: '/dashboard/investments', disabled: true },
@@ -52,7 +52,7 @@ function getMobileMenuPanel() {
 
 describe('DashboardSidebarNav', () => {
   it('destaca item ativo pela rota atual e respeita itens desabilitados', () => {
-    usePathnameMock.mockReturnValue('/dashboard');
+    usePathnameMock.mockReturnValue('/dashboard/home');
     redirectMock.mockClear();
     render(<DashboardSidebarNav items={items} />);
 
@@ -68,7 +68,7 @@ describe('DashboardSidebarNav', () => {
     fireEvent.click(enabledButton);
     fireEvent.click(disabledButton);
 
-    expect(redirectMock).toHaveBeenNthCalledWith(1, '/dashboard');
+    expect(redirectMock).toHaveBeenNthCalledWith(1, '/dashboard/home');
     expect(redirectMock).toHaveBeenNthCalledWith(2, '/dashboard/my-cards');
     expect(redirectMock).toHaveBeenCalledTimes(2);
   });

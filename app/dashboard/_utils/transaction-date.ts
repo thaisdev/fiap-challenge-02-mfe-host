@@ -73,7 +73,7 @@ export function getTransactionDateRange(
 
   return {
     minDate: `${currentYear - 1}-01-01`,
-    maxDate: `${currentYear}-12-31`,
+    maxDate: formatDateParts(referenceDate, timeZone),
   };
 }
 

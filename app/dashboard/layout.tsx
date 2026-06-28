@@ -8,16 +8,13 @@ import { AccountSummaryCard } from './_components/account-summary-card';
 import { DashboardHeader } from './_components/dashboard-header';
 import { Alert } from '@/components/ui/alert';
 import { DashboardStoreProvider } from './_store/redux-provider';
-import {
-  DashboardSidebarItem,
-  DashboardSidebarNav,
-} from './_components/dashboard-sidebar-nav';
+import { DashboardSidebarItem, DashboardSidebarNav } from './_components/dashboard-sidebar-nav';
 import { StatementPanel } from './_components/statement-panel';
 import { ReactNode } from 'react';
 import { useAccount, useAccountActions } from './_store/account/account.hooks';
 
 const sidebarItems: readonly DashboardSidebarItem[] = [
-  { key: 'home', label: 'Início', link: '/dashboard' },
+  { key: 'home', label: 'Início', link: '/dashboard/home' },
   { key: 'transactions', label: 'Transações', link: '/dashboard/transactions' },
   { key: 'investments', label: 'Investimentos', link: '/dashboard/investments', disabled: true },
   {
@@ -107,8 +104,12 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
               {children}
             </div>
 
-            <div className="w-full max-w-75 desktop:col-start-3 desktop:flex desktop:h-full desktop:max-w-none">
-              <StatementPanel title="Extrato" entries={transactions} viewAllHref="/dashboard/transactions" />
+            <div className="w-full desktop:max-w-75 desktop:col-start-3 desktop:flex desktop:h-full desktop:max-w-none">
+              <StatementPanel
+                title="Extrato"
+                entries={transactions}
+                viewAllHref="/dashboard/transactions"
+              />
             </div>
           </div>
         </div>
