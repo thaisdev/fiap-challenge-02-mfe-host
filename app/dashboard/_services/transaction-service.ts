@@ -140,6 +140,7 @@ async function sendTransactionRequest(
 }
 
 export type TransactionFilters = {
+  transactionId?: number;
   startDate?: string;
   endDate?: string;
   type?: string;
@@ -153,7 +154,7 @@ export type TransactionPaginationQuery = {
 export async function fetchTransactions(
   userId: number,
   token: string,
-  { page = 1, limit = 10, startDate, endDate, type }: Partial<TransactionPaginationQuery> & TransactionFilters = {}
+  { page = 1, limit = 10, transactionId, startDate, endDate, type }: Partial<TransactionPaginationQuery> & TransactionFilters = {}
 ): Promise<{ ok: true; transactions: PaginatedTransactions } | { ok: false; message: string }> {
   const fallbackErrorMessage = 'Não foi possível carregar as transações.';
   const params = new URLSearchParams({
@@ -165,7 +166,10 @@ export async function fetchTransactions(
   if (type) params.set('type', type);
 
   try {
-    const response = await fetch(`${accountTransactionsUrl(userId)}?${params.toString()}`, {
+    const url = transactionId
+      ? `${accountTransactionsUrl(userId)}/${transactionId}`
+      : `${accountTransactionsUrl(userId)}?${params.toString()}`;
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -177,6 +181,23 @@ export async function fetchTransactions(
       return {
         ok: false,
         message: resolveServiceMessage(body as ServiceMessageResponse | null, fallbackErrorMessage),
+      };
+    }
+
+    if (transactionId && isTransactionPayload(body)) {
+      return {
+        ok: true,
+        transactions: {
+          data: [body],
+          pagination: {
+            page: 1,
+            limit: 1,
+            totalItems: 1,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        },
       };
     }
 

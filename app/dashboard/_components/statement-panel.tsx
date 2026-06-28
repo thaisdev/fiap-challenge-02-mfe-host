@@ -25,6 +25,7 @@ type StatementPanelProps = {
   ariaLabel?: string;
   editableYear?: number | null;
   showActions?: boolean;
+  showTransactionId?: boolean;
   entries?: Transaction[];
   pagination?: TransactionsPagination;
   isLoading?: boolean;
@@ -38,6 +39,7 @@ export function StatementPanel({
   title = 'Extrato',
   ariaLabel = 'Extrato da conta',
   showActions = true,
+  showTransactionId = false,
   entries,
   pagination,
   isLoading = false,
@@ -214,53 +216,60 @@ export function StatementPanel({
               key={transaction.id}
               onClick={() => setSelectedTransactionId(transaction.id)}
               className={[
-                'cursor-pointer border-b border-secondary/35 pb-2 transition-colors',
+                'cursor-pointer border-b border-secondary/35 py-2 transition-colors',
                 activeSelectedTransactionId === transaction.id ? 'bg-surface-soft' : '',
               ].join(' ')}
             >
-              <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="text-body-sm font-semibold text-secondary">
-                  {formatTransactionMonthLabel(transaction.date)}
-                </span>
-                <span className="text-body-sm text-subtle">
-                  {formatTransactionDateLabel(transaction.date)}
-                </span>
-              </div>
-              <p className="text-body-md text-heading">
-                {formatTransactionTypeLabel(transaction.type)}
-              </p>
-              <p className="text-title-lg font-semibold text-black">
-                {formatCurrency(transaction.value)}
-              </p>
-              {transaction.receiptFile ? (
-                <div className="mt-1.5 flex items-center gap-2">
-                  <span
-                    className="min-w-0 flex-1 truncate text-body-xs text-subtle"
-                    title={transaction.receiptFile.filename}
-                  >
-                    {transaction.receiptFile.filename}
-                  </span>
-                  <a
-                    href={transaction.receiptFile.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
-                    aria-label={`Abrir comprovante ${transaction.receiptFile.filename} em nova aba`}
-                    className="inline-flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-sm text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  >
-                    <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
-                      <path
-                        d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="none"
-                      />
-                    </svg>
-                  </a>
+              <div className="flex items-stretch justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-body-sm font-semibold text-secondary">
+                    {formatTransactionMonthLabel(transaction.date)}
+                  </p>
+                  <p className="text-body-md text-heading">
+                    {formatTransactionTypeLabel(transaction.type)}
+                  </p>
+                  <p className="text-title-lg font-semibold text-black">
+                    {formatCurrency(transaction.value)}
+                  </p>
+                  {transaction.receiptFile ? (
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span
+                        className="min-w-0 flex-1 truncate text-body-xs text-subtle"
+                        title={transaction.receiptFile.filename}
+                      >
+                        {transaction.receiptFile.filename}
+                      </span>
+                      <a
+                        href={transaction.receiptFile.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        aria-label={`Abrir comprovante ${transaction.receiptFile.filename} em nova aba`}
+                        className="inline-flex h-6 w-6 flex-none cursor-pointer items-center justify-center rounded-sm text-primary transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      >
+                        <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4">
+                          <path
+                            d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            fill="none"
+                          />
+                        </svg>
+                      </a>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
+                <div className="flex flex-none flex-col items-end justify-between">
+                  <span className="text-body-sm text-subtle">
+                    {formatTransactionDateLabel(transaction.date)}
+                  </span>
+                  {showTransactionId ? (
+                    <span className="text-body-sm text-subtle">{transaction.id}</span>
+                  ) : null}
+                </div>
+              </div>
             </li>
           ))}
         </ul>

@@ -167,6 +167,7 @@ export const accountSlice = createSlice({
       state.transactionsPage.pagination.page = action.payload.page;
       state.transactionsPage.pagination.limit = action.payload.limit;
       state.transactionsPage.filters = {
+        transactionId: action.payload.transactionId,
         startDate: action.payload.startDate,
         endDate: action.payload.endDate,
         type: action.payload.type,

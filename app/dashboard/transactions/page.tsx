@@ -42,6 +42,7 @@ export default function TransactionsPage() {
       <StatementPanel
         title="Transações"
         ariaLabel="Painel de transações"
+        showTransactionId
         entries={data}
         pagination={pagination}
         isLoading={request.status === 'loading'}

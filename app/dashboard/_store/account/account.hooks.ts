@@ -55,12 +55,12 @@ export function useAccountActions() {
   }, [dispatch, token, userId]);
 
   const reloadTransactionsPage = useCallback(
-    ({ page = 1, limit = 10, startDate, endDate, type }: Partial<TransactionPaginationQuery> & TransactionFilters = {}) => {
+    ({ page = 1, limit = 10, transactionId, startDate, endDate, type }: Partial<TransactionPaginationQuery> & TransactionFilters = {}) => {
       if (!userId || !token) {
         return Promise.resolve();
       }
 
-      return dispatch(loadTransactionsPage({ userId, token, page, limit, startDate, endDate, type }));
+      return dispatch(loadTransactionsPage({ userId, token, page, limit, transactionId, startDate, endDate, type }));
     },
     [dispatch, token, userId]
   );

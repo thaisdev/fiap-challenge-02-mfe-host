@@ -168,6 +168,41 @@ describe('transaction-service', () => {
       expect(result).toEqual({ ok: true, transactions: response });
     });
 
+    it('busca uma transação pelo ID e normaliza o resultado para a listagem', async () => {
+      const transactionId = 1782086245806;
+      const transaction = { ...payload, id: transactionId };
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(transaction),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+
+      const result = await fetchTransactions(969, 'token-123', { transactionId });
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `/api/users/969/account/transactions/${transactionId}`,
+        {
+          headers: {
+            Authorization: 'Bearer token-123',
+          },
+        }
+      );
+      expect(result).toEqual({
+        ok: true,
+        transactions: {
+          data: [transaction],
+          pagination: {
+            page: 1,
+            limit: 1,
+            totalItems: 1,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+          },
+        },
+      });
+    });
+
     it('retorna falha quando a resposta paginada vem inválida', async () => {
       const fetchMock = vi.fn().mockResolvedValue({
         ok: true,
