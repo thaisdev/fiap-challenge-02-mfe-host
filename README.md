@@ -49,7 +49,7 @@ A aplicação depende de uma API REST externa. Você tem duas opções:
 
 **Opção A — Usar a API publicada (mais rápido)**
 
-A API já está disponível publicamente em **http://3.131.169.219:3333**. Basta configurar a variável de ambiente apontando para esse endereço (veja o passo 3).
+A API já está disponível publicamente em **http://18.116.12.234:3333**. Basta configurar a variável de ambiente apontando para esse endereço (veja o passo 3).
 
 **Opção B — Rodar a API localmente**
 
@@ -75,7 +75,7 @@ Abaixo a descrição de cada variável:
 
 **`API_URL`** — endereço da API REST.
 
-- API publicada: `http://3.131.169.219:3333`
+- API publicada: `http://18.116.12.234:3333`
 - API local: `http://localhost:3333`
 
 **`NEXT_PUBLIC_FINANCIAL_VISIBILITY_MFE_REMOTE_ENTRY_URL`** — URL do microfrontend Angular de visibilidade financeira.
@@ -159,7 +159,7 @@ Escolha a opção de acordo com onde a API está rodando e como deseja armazenar
 
 ```bash
 docker run \
-  -e API_URL=http://3.131.169.219:3333 \
+  -e API_URL=http://18.116.12.234:3333 \
   -e BLOB_READ_WRITE_TOKEN=<seu_token> \
   -p 3000:3000 \
   mcintosh-bank
@@ -169,7 +169,7 @@ docker run \
 
 ```bash
 docker run \
-  -e API_URL=http://3.131.169.219:3333 \
+  -e API_URL=http://18.116.12.234:3333 \
   -v uploads:/app/uploads \
   -p 3000:3000 \
   mcintosh-bank
