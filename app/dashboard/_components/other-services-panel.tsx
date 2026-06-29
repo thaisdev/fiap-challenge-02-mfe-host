@@ -27,57 +27,68 @@ export function OtherServicesPanel() {
   };
 
   return (
-    <section className="relative cursor-pointer overflow-hidden rounded-md p-5" aria-live="polite">
+    <section className="relative cursor-pointer overflow-hidden rounded-md p-5 flex flex-col" aria-live="polite">
       {activeService?.id === 'my-cards' ? (
-        <div className="bg-[#cbcbcb] rounded-2xl p-6 sm:p-10">
+        <div className="bg-[#cbcbcb] rounded-2xl p-6 sm:p-8 w-full min-h-full flex flex-col overflow-hidden">
           <h2 className="text-xl sm:text-2xl font-bold text-black">Meus Cartões</h2>
 
-          <div className="pt-5">
-            <p className="text-body-md">Cartão Físico</p>
-          </div>
-
           {/* Primeiro cartão */}
-          <div className="flex flex-col lg:flex-row items-start gap-6 mt-6">
-            <div className="bg-[#004d61] rounded-2xl w-full sm:w-[300px] lg:w-[350px] p-4 shadow-md flex-shrink-0">
-              <p className="text-xl sm:text-2xl text-white">Byte</p>
-              <p className="text-body-md tracking-[0.05em] text-white">Platinum</p>
-              <p className="text-body-md mt-8 text-white">Joana Fonseca Gomes</p>
-              <p className="text-body-md mt-2 text-white">•••••••••</p>
-            </div>
+          <div className="pt-5">
+            <p className="text-body-md mb-3">Cartão Físico</p>
+            <div className="flex flex-row items-center gap-4 w-full">
+              {/* Cartão */}
+              <div className="bg-[#004d61] rounded-2xl p-4 shadow-md flex-shrink-0 w-[55%] min-w-0">
+                <p className="text-lg sm:text-xl text-white font-bold italic">Byte</p>
+                <p className="text-sm tracking-[0.05em] text-white">Platinum</p>
+                <p className="text-sm mt-6 text-white">Joana Fonseca Gomes</p>
+                <p className="text-sm mt-2 text-white">•••••••••</p>
+              </div>
 
-            <div className="flex flex-col flex-1 items-stretch">
-              <Button variant="solid" tone="accent" className="cursor-pointer transition-transform hover:scale-105">
-                Configurar
-              </Button>
-              <Button variant="outline" tone="error" className="mt-3 cursor-pointer transition-transform hover:scale-105">
-                Bloquear
-              </Button>
-              <p className="mt-4 text-sm text-center text-gray-700">Função: Débito/Crédito</p>
+              {/* Botões */}
+              <div className="flex flex-col gap-3 flex-1 min-w-0">
+                <Button variant="solid" tone="accent" className="w-full cursor-pointer transition-transform hover:scale-105">
+                  Configurar
+                </Button>
+                <Button variant="outline" tone="error" className="w-full cursor-pointer transition-transform hover:scale-105">
+                  Bloquear
+                </Button>
+                <p className="text-xs text-center text-gray-700">Função: Débito/Crédito</p>
+              </div>
             </div>
           </div>
 
           {/* Segundo cartão */}
-          <div className="flex flex-col lg:flex-row items-start gap-6 mt-6">
-            <div className="bg-[#8b8b8b] rounded-2xl w-full sm:w-[300px] lg:w-[350px] p-4 shadow-md flex-shrink-0">
-              <p className="text-xl sm:text-2xl text-white">Byte</p>
-              <p className="text-body-md tracking-[0.05em] text-white">Platinum</p>
-              <p className="text-body-md mt-8 text-white">Joana Fonseca Gomes</p>
-              <p className="text-body-md mt-2 text-white">•••••••••</p>
-            </div>
+          <div className="pt-6">
+            <p className="text-body-md mb-3">Cartão Digital</p>
+            <div className="flex flex-row items-center gap-4 w-full">
+              {/* Cartão */}
+              <div className="bg-[#8b8b8b] rounded-2xl p-4 shadow-md flex-shrink-0 w-[55%] min-w-0">
+                <p className="text-lg sm:text-xl text-white font-bold italic">Byte</p>
+                <p className="text-sm tracking-[0.05em] text-white">Platinum</p>
+                <p className="text-sm mt-6 text-white">Joana Fonseca Gomes</p>
+                <p className="text-sm mt-2 text-white">•••••••••</p>
+              </div>
 
-            <div className="flex flex-col flex-1 items-stretch">
-              <Button variant="solid" tone="accent" className="cursor-pointer transition-transform hover:scale-105">
-                Configurar
-              </Button>
-              <Button variant="outline" tone="error" className="mt-3 cursor-pointer transition-transform hover:scale-105">
-                Bloquear
-              </Button>
-              <p className="mt-4 text-sm text-center text-gray-700">Função: Débito/Crédito</p>
+              {/* Botões */}
+              <div className="flex flex-col gap-3 flex-1 min-w-0">
+                <Button variant="solid" tone="accent" className="w-full cursor-pointer transition-transform hover:scale-105">
+                  Configurar
+                </Button>
+                <Button variant="outline" tone="error" className="w-full cursor-pointer transition-transform hover:scale-105">
+                  Bloquear
+                </Button>
+                <p className="text-xs text-center text-gray-700">Função: Débito</p>
+              </div>
             </div>
           </div>
 
-          <div className="mt-6">
-            <Button variant="solid" tone="accent" onClick={() => setActiveService(null)} className="cursor-pointer transition-transform hover:scale-105">
+          <div className="mt-auto pt-6">
+            <Button
+              variant="solid"
+              tone="accent"
+              onClick={() => setActiveService(null)}
+              className="w-full sm:w-auto cursor-pointer transition-transform hover:scale-105"
+            >
               Voltar
             </Button>
           </div>
