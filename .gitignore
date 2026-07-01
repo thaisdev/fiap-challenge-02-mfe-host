@@ -37,3 +37,6 @@ next-env.d.ts
 
 # local file uploads (dev only)
 /uploads/
+
+#API
+fiap-techchallenge-02-api/
